@@ -77,13 +77,15 @@
                                                         class="btn btn-success-light btn-icon btn-sm">
                                                         <i class="ri-pencil-line"></i>
                                                     </a>
-                                                    <form action="{{ route('reminder-rules.destroy', $rule) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger-light btn-icon btn-sm" onclick="return confirm('Are you sure?')">
-                                                            <i class="ri-delete-bin-5-line"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button"
+                                                        class="btn btn-danger-light btn-icon btn-sm"
+                                                        data-delete-modal
+                                                        data-title="Delete Reminder Rule"
+                                                        data-message="Are you sure you want to delete '{{ $rule->name }}'? This will also delete all associated steps and cannot be undone."
+                                                        data-form-id="{{ route('reminder-rules.destroy', $rule) }}"
+                                                        data-record-name="reminder rule">
+                                                        <i class="ri-delete-bin-5-line"></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>

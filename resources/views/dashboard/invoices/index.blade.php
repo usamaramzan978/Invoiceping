@@ -148,10 +148,14 @@
                                                         <i class="ri-download-line"></i>
                                                     </a>
                                                 @endif
-                                                <a href="{{ route('invoices.destroy', $invoice) }}"
-                                                    class="btn btn-danger-light btn-icon ms-1 btn-sm invoice-btn">
+                                                <button type="button"
+                                                    class="btn btn-danger-light btn-icon ms-1 btn-sm invoice-btn"
+                                                    data-delete-modal data-title="Delete Invoice"
+                                                    data-message="Are you sure you want to delete invoice #{{ $invoice->invoice_number }}? This action cannot be undone."
+                                                    data-form-id="{{ route('invoices.destroy', $invoice) }}"
+                                                    data-record-name="invoice">
                                                     <i class="ri-delete-bin-5-line"></i>
-                                                </a>
+                                                </button>
                                                 <button type="button" class="btn btn-primary btn-sm ms-1 send-invoice-btn"
                                                     data-invoice-id="{{ $invoice->id }}" data-bs-toggle="modal"
                                                     data-bs-target="#sendInvoiceModal">
@@ -327,12 +331,23 @@
                         <div class="form-check form-check-inline">
                             <input class="form-check-input channel-checkbox" type="checkbox" name="channels[]"
                                 id="channel-email" value="email" checked>
-                            <label class="form-check-label" for="channel-email">Email</label>
+                            <label class="form-check-label" for="channel-email">
+                                <i class="ri-mail-line me-1"></i>Email
+                            </label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input channel-checkbox" type="checkbox" name="channels[]"
                                 id="channel-whatsapp" value="whatsapp">
-                            <label class="form-check-label" for="channel-whatsapp">WhatsApp</label>
+                            <label class="form-check-label" for="channel-whatsapp">
+                                <i class="ri-whatsapp-line me-1"></i>WhatsApp
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input channel-checkbox" type="checkbox" name="channels[]"
+                                id="channel-sms" value="sms">
+                            <label class="form-check-label" for="channel-sms">
+                                <i class="ri-message-2-line me-1"></i>SMS
+                            </label>
                         </div>
                     </div>
                     <div class="alert alert-info py-2 px-3 mb-3">
@@ -366,10 +381,21 @@
     let SEND_TEMPLATES = [];
     // Fetch all templates once and store in SEND_TEMPLATES
     fetch("{{ route('message-templates-invoice') }}")
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Failed to load templates');
+            }
+            return res.json();
+        })
         .then(data => {
             SEND_TEMPLATES = data;
+            console.log('Templates loaded:', SEND_TEMPLATES);
             updateTemplateGrid();
+        })
+        .catch(error => {
+            console.error('Error loading templates:', error);
+            document.getElementById('template-grid-area').innerHTML =
+                '<div class="alert alert-danger"><i class="ri-error-warning-line me-1"></i>Failed to load templates. Please refresh the page.</div>';
         });
 
     function updateTemplateGrid() {
@@ -379,20 +405,44 @@
         const selectedChannels = Array.from(document.querySelectorAll('.channel-checkbox:checked')).map(cb => cb.value);
         selectedChannels.forEach(channel => {
             const channelTemplates = SEND_TEMPLATES.filter(t => t.channel === channel);
-            if (channelTemplates.length === 0) return;
+            if (channelTemplates.length === 0) {
+                // Show message if no templates available
+                const channelTitle = channel.charAt(0).toUpperCase() + channel.slice(1);
+                gridArea.innerHTML += `<div class='alert alert-warning mb-3'>
+                    <i class='ri-alert-line me-1'></i>No ${channelTitle} templates available. Default template will be used.
+                </div>`;
+                return;
+            }
             const channelTitle = channel.charAt(0).toUpperCase() + channel.slice(1);
             let html =
                 `<div class='mb-2'><strong>${channelTitle} Templates</strong></div><div class='row g-2 mb-3'>`;
             channelTemplates.forEach(template => {
                 const isDefault = template.is_default;
+                // For email templates, show subject if available
+                let displayContent = '';
+                if (channel === 'email' && template.subject) {
+                    displayContent =
+                        `<div class='text-muted small mb-1'><strong>Subject:</strong> ${escapeHtml(template.subject)}</div>`;
+                }
+                // Show content preview (limit length for display)
+                const contentPreview = template.content ? escapeHtml(String(template.content).substring(
+                    0, 100)) : '';
+                if (contentPreview) {
+                    displayContent +=
+                        `<div class='text-muted small'>${contentPreview}${template.content && template.content.length > 100 ? '...' : ''}</div>`;
+                } else {
+                    displayContent +=
+                        `<div class='text-muted small'><em>No preview available</em></div>`;
+                }
+
                 html += `<div class='col-12 col-md-4'>
                     <div class='card template-card ${isDefault ? 'border-primary' : ''}' data-template-id='${template.id}' data-channel='${channel}' style='cursor:pointer;'>
                         <div class='card-body p-2'>
                             <div class='d-flex justify-content-between align-items-center mb-1'>
-                                <span class='fw-semibold'>${template.name}</span>
+                                <span class='fw-semibold'>${escapeHtml(template.name)}</span>
                                 ${isDefault ? '<span class="badge bg-primary">Default</span>' : ''}
                             </div>
-                            <div class='text-muted small'>${template.content}</div>
+                            ${displayContent}
                         </div>
                     </div>
                 </div>`;
@@ -419,6 +469,18 @@
                 input.value = card.getAttribute('data-template-id');
             };
         });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
     }
     // Update grid on channel checkbox change
     document.addEventListener('DOMContentLoaded', function() {

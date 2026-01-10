@@ -4,55 +4,61 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendInvoiceMessageJob;
-use App\Models\Invoice;
-use App\Models\MessageTemplates;
+use App\Actions\Invoice\SendInvoiceMessageAction;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-final class SendInvoiceMessageController
+final readonly class SendInvoiceMessageController
 {
+    public function __construct(
+        private SendInvoiceMessageAction $sendMessageAction
+    ) {}
+
+    /**
+     * Send invoice messages via selected channels.
+     */
     public function send(Request $request)
     {
         $validated = $request->validate([
             'invoice_id' => ['required', 'uuid', 'exists:invoices,id'],
-            'channels' => ['required', 'array'],
-            'channels.*' => ['string', 'in:email,whatsapp'],
+            'channels' => ['required', 'array', 'min:1'],
+            'channels.*' => ['string', 'in:email,whatsapp,sms'],
             'selected_template' => ['nullable', 'array'],
-            'selected_template.email' => ['nullable', 'uuid', 'exists:message_templates,id'],
+            'selected_template.email' => ['nullable', 'integer', 'exists:email_templates,id'],
             'selected_template.whatsapp' => ['nullable', 'uuid', 'exists:message_templates,id'],
+            'selected_template.sms' => ['nullable', 'uuid', 'exists:message_templates,id'],
         ]);
 
-        $invoice = Invoice::query()->findOrFail($validated['invoice_id']);
-        $channels = $validated['channels'];
-        $selectedTemplates = $validated['selected_template'] ?? [];
+        $userId = Auth::id();
 
-        $defaultTemplates = MessageTemplates::query()->where('business_id', $invoice->business_id)
-            ->whereIn('channel', $channels)
-            ->where('is_default', true)
-            ->get()
-            ->keyBy('channel');
-
-        foreach ($channels as $channel) {
-
-            // Use selected template or fallback to default
-            $template = isset($selectedTemplates[$channel])
-                ? MessageTemplates::query()->where('business_id', $invoice->business_id)
-                    ->where('id', $selectedTemplates[$channel])
-                    ->first()
-                : $defaultTemplates[$channel] ?? null;
-
-            // Throw exception if template missing
-            if (! $template) {
-                throw ValidationException::withMessages([
-                    'selected_template' => ['No template found for channel: '.$channel],
-                ]);
-            }
-
-            // Dispatch job
-            dispatch(new SendInvoiceMessageJob($invoice->id, $template->id, $channel));
+        if ($userId === null) {
+            return back()->with('error', 'You must be logged in to send messages.');
         }
 
-        return back()->with('success', 'Invoice message(s) are being sent.');
+        try {
+            $results = $this->sendMessageAction->execute($validated, $userId);
+
+            // Check if any channel failed
+            $failedChannels = array_filter($results, fn (array $result): bool => ! $result['success']);
+
+            if ($failedChannels !== []) {
+                $errorMessages = array_map(
+                    fn (array $result) => $result['message'],
+                    $failedChannels
+                );
+
+                return back()->with('error', 'Some messages failed to send: '.implode(', ', $errorMessages));
+            }
+
+            $successCount = count(array_filter($results, fn (array $result) => $result['success']));
+
+            return back()->with('success', sprintf('Successfully queued %d message(s) for sending.', $successCount));
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors())->withInput();
+        } catch (Exception $exception) {
+            return back()->with('error', 'An error occurred while sending messages: '.$exception->getMessage());
+        }
     }
 }

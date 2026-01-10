@@ -35,8 +35,7 @@ final class EmailTemplateController extends Controller
 
         $query = EmailTemplate::query()
             ->where('user_id', $user->id)
-            ->orderBy('is_default', 'desc')
-            ->orderBy('created_at', 'desc');
+            ->orderBy('is_default', 'desc')->latest();
 
         // Filter by active status if requested
         if ($request->has('active_only') && $request->boolean('active_only')) {
@@ -82,7 +81,7 @@ final class EmailTemplateController extends Controller
 
             // If this template is being set as default, unset other defaults
             if (isset($data['is_default']) && $data['is_default']) {
-                EmailTemplate::where('user_id', $user->id)
+                EmailTemplate::query()->where('user_id', $user->id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
             }
@@ -108,17 +107,17 @@ final class EmailTemplateController extends Controller
                 'message' => 'Template created successfully.',
                 'data' => $template->fresh(),
             ], 201);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             DB::rollBack();
             Log::error('Failed to create email template', [
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
                 'user_id' => $user->id,
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create template.',
-                'error' => $e->getMessage(),
+                'error' => $exception->getMessage(),
             ], 500);
         }
     }
@@ -138,7 +137,7 @@ final class EmailTemplateController extends Controller
         }
 
         try {
-            $template = EmailTemplate::where('user_id', $user->id)
+            $template = EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', $id)
                 ->firstOrFail();
 
@@ -171,7 +170,7 @@ final class EmailTemplateController extends Controller
         try {
             DB::beginTransaction();
 
-            $template = EmailTemplate::where('user_id', $user->id)
+            $template = EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', $id)
                 ->firstOrFail();
 
@@ -180,7 +179,7 @@ final class EmailTemplateController extends Controller
 
             // If this template is being set as default, unset other defaults
             if (isset($data['is_default']) && $data['is_default']) {
-                EmailTemplate::where('user_id', $user->id)
+                EmailTemplate::query()->where('user_id', $user->id)
                     ->where('id', '!=', $id)
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
@@ -190,23 +189,29 @@ final class EmailTemplateController extends Controller
             if (isset($data['name'])) {
                 $template->name = $data['name'];
             }
+
             if (isset($data['subject'])) {
                 $template->subject = $data['subject'];
             }
+
             if (isset($data['template_json'])) {
                 /** @var array<string, mixed> */
                 $templateJson = json_decode($data['template_json'], true) ?? [];
                 $template->template_json = $templateJson;
             }
+
             if (isset($data['template_html'])) {
                 $template->template_html = $data['template_html'];
             }
+
             if (isset($data['category'])) {
                 $template->category = $data['category'];
             }
+
             if (isset($data['is_default'])) {
                 $template->is_default = $data['is_default'];
             }
+
             if (isset($data['is_active'])) {
                 $template->is_active = $data['is_active'];
             }
@@ -258,7 +263,7 @@ final class EmailTemplateController extends Controller
         }
 
         try {
-            $template = EmailTemplate::where('user_id', $user->id)
+            $template = EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', $id)
                 ->firstOrFail();
 
@@ -313,12 +318,12 @@ final class EmailTemplateController extends Controller
         try {
             DB::beginTransaction();
 
-            $template = EmailTemplate::where('user_id', $user->id)
+            $template = EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', $id)
                 ->firstOrFail();
 
             // Unset all other defaults for this user
-            EmailTemplate::where('user_id', $user->id)
+            EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', '!=', $id)
                 ->update(['is_default' => false]);
 
@@ -371,7 +376,7 @@ final class EmailTemplateController extends Controller
         }
 
         try {
-            $template = EmailTemplate::where('user_id', $user->id)
+            $template = EmailTemplate::query()->where('user_id', $user->id)
                 ->where('id', $id)
                 ->firstOrFail();
 
@@ -408,7 +413,7 @@ final class EmailTemplateController extends Controller
      */
     public function create(): Factory|View
     {
-        return view('templates.editor');
+        return view('dashboard.templates.editor');
     }
 
     /**

@@ -173,10 +173,10 @@
                             </div>
 
                             ${template.subject ? `
-                                    <p class="text-muted mb-2">
-                                        <strong>Subject:</strong> ${escapeHtml(template.subject)}
-                                    </p>
-                                ` : ''}
+                                        <p class="text-muted mb-2">
+                                            <strong>Subject:</strong> ${escapeHtml(template.subject)}
+                                        </p>
+                                    ` : ''}
 
                             <div class="d-flex align-items-center justify-content-between mt-3">
                                 <div>

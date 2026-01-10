@@ -1,11 +1,5 @@
 @extends('layouts.app')
 
-@section('styles')
-    <!-- QUILL CSS -->
-    <link rel="stylesheet" href="{{ asset('build/assets/libs/quill/quill.snow.css') }}">
-    <link rel="stylesheet" href="{{ asset('build/assets/libs/quill/quill.bubble.css') }}">
-@endsection
-
 @section('content')
     <div class="container-fluid">
 
@@ -15,195 +9,232 @@
             <div class="ms-md-1 ms-0">
                 <nav>
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="javascript:void(0);">Message Template</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Create Message Template</li>
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('templates.index') }}">Templates</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Create</li>
                     </ol>
                 </nav>
             </div>
         </div>
+        <!-- Page Header Close -->
+
         <div class="row">
-            <div class="col-12 col-lg-6">
-                <div class="card custom-card h-100">
-                    <div class="card-header bg-light">
-                        <h4 class="card-title mb-0">New Template</h4>
+            <!-- Form Section -->
+            <div class="col-xl-6">
+                <div class="card custom-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="ri-file-add-line me-2"></i>New Template
+                        </div>
                     </div>
-                    <form method="POST" action="{{ route('templates.store') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('templates.store') }}" id="templateForm">
                         @csrf
                         <div class="card-body">
+                            <!-- Template Name -->
                             <div class="mb-3">
-                                <label for="channel" class="form-label fw-500">Channel</label>
-                                <select name="channel" id="channel" class="form-select" required>
-                                    <option value="email">📧 Email</option>
-                                    <option value="whatsapp">💬 WhatsApp</option>
-                                </select>
+                                <label for="name" class="form-label">Template Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                    id="name" name="name" value="{{ old('name') }}"
+                                    placeholder="e.g., Payment Reminder" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">A descriptive name for internal reference</small>
                             </div>
-                            <div class="mb-3" id="email-fields">
-                                <label for="subject" class="form-label fw-500">Email Subject</label>
-                                <input type="text" class="form-control" name="subject" id="subject" maxlength="150"
-                                    placeholder="Enter email subject">
-                            </div>
-                            <div class="mb-3">
-                                <label for="content" class="form-label fw-500">Message Body</label>
-                                <small class="text-muted d-block mb-2">Available variables: @{{ client_name }},
-                                    @{{ invoice_number }}, @{{ amount }}, @{{ due_date }}</small>
-                                {{-- <textarea class="form-control" name="content" id="content" rows="6" required
-                                    placeholder="Enter your message..."></textarea> --}}
-                                <div id="editorContent" style="height: 200px;"></div>
-                                <input type="hidden" name="content" id="content">
 
-                                <div class="form-text" id="whatsapp-help" style="display:none;">💡 Use Shift+Enter for line
-                                    breaks in WhatsApp messages</div>
+                            <!-- Channel Selection -->
+                            <div class="mb-3">
+                                <label for="channel" class="form-label">Channel <span class="text-danger">*</span></label>
+                                <select name="channel" id="channel"
+                                    class=" form-select @error('channel') is-invalid @enderror" required>
+                                    <option value="">Select Channel</option>
+                                    <option value="whatsapp" {{ old('channel') == 'whatsapp' ? 'selected' : '' }}>
+                                        📱 WhatsApp
+                                    </option>
+                                    <option value="sms" {{ old('channel') == 'sms' ? 'selected' : '' }}>
+                                        💬 SMS
+                                    </option>
+                                </select>
+                                @error('channel')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
+
+                            <!-- Message Content -->
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Message Content <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control @error('content') is-invalid @enderror" name="content" id="content" rows="8"
+                                    required placeholder="Write your message here...">{{ old('content') }}</textarea>
+                                @error('content')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="mt-2">
+                                    <div class="alert alert-info mb-0" role="alert">
+                                        <strong>Available Variables:</strong>
+                                        <div class="mt-2">
+                                            @foreach ($availableVariables ?? [] as $variable => $description)
+                                                <span class="badge bg-primary-transparent me-1 mb-1"
+                                                    data-bs-toggle="tooltip" title="{{ $description }}">
+                                                    {{ $variable }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                        <small class="d-block mt-2 text-muted">
+                                            <i class="ri-information-line me-1"></i>
+                                            Hover over variables to see descriptions
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- Settings -->
                             <div class="row">
                                 <div class="col-6">
                                     <div class="mb-3">
-                                        <label class="form-label fw-500">Default Template?</label>
+                                        <label class="form-label">Set as Default</label>
                                         <select name="is_default" class="form-select js-example-basic-single">
-                                            <option value="0">No</option>
-                                            <option value="1">Yes</option>
+                                            <option value="0" {{ old('is_default') == '0' ? 'selected' : '' }}>No
+                                            </option>
+                                            <option value="1" {{ old('is_default') == '1' ? 'selected' : '' }}>Yes
+                                            </option>
                                         </select>
+                                        <small class="text-muted">Default templates are auto-selected</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="mb-3">
-                                        <label class="form-label fw-500">Active</label>
+                                        <label class="form-label">Status</label>
                                         <select name="is_active" class="form-select js-example-basic-single">
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
+                                            <option value="1" {{ old('is_active', '1') == '1' ? 'selected' : '' }}>
+                                                Active</option>
+                                            <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Inactive
+                                            </option>
                                         </select>
+                                        <small class="text-muted">Only active templates can be used</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-footer bg-light text-end">
-                            <a href="{{ route('templates.index') }}" class="btn btn-secondary btn-sm">Cancel</a>
-                            <button type="submit" class="btn btn-primary btn-sm">Create Template</button>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ route('templates.index') }}" class="btn btn-light">
+                                    <i class="ri-close-line me-1"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-save-line me-1"></i> Create Template
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
+
+                <!-- Character Counter Card -->
+                <div class="card custom-card" id="sms-limit-card" style="display: none;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="fw-semibold mb-1">Character Count</h6>
+                                <p class="text-muted mb-0 fs-12">SMS has a 160 character limit per message</p>
+                            </div>
+                            <div class="text-end">
+                                <h3 class="mb-0" id="char-count">0</h3>
+                                <small class="text-muted" id="sms-parts">1 SMS</small>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 6px;">
+                            <div class="progress-bar" id="char-progress" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-12 col-lg-6">
-                <div class="card h-100">
-                    <div class="card-header bg-light">
-                        <h4 class="card-title mb-0">📱 Live Preview</h4>
+            <!-- Live Preview Section -->
+            <div class="col-xl-6">
+                <div class="card custom-card sticky-top" style="top: 20px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="ri-smartphone-line me-2"></i>Live Preview
+                        </div>
                     </div>
                     <div class="card-body"
-                        style="background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%); display: flex; align-items: center; justify-content: center; min-height: 600px;">
+                        style="min-height: 500px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
 
-                        <!-- Email Preview -->
-                        <div id="preview-email" style="display: none; width: 100%; max-width: 450px;">
-                            <div
-                                style="background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #e8e8e8;">
-                                <!-- Gmail Header -->
-                                <div style="background: #fff; border-bottom: 1px solid #e8e8e8; padding: 16px;">
-                                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                                        <img src="https://www.gstatic.com/images/branding/product/1x/gmail_2020q4_32dp.png"
-                                            alt="Gmail" style="width: 24px; height: 24px;">
-                                        <span style="font-size: 14px; color: #666;">Gmail</span>
-                                    </div>
-                                    <div style="font-size: 14px; color: #5f6368; margin-bottom: 8px;">From: <strong>
-                                            {{ auth()->user()->business->email }}</strong></div>
-                                    <div style="font-size: 14px; color: #5f6368;">To: <strong>client@example.com</strong>
-                                    </div>
-                                </div>
-
-                                <!-- Subject -->
-                                <div style="padding: 0 16px; padding-top: 12px;">
-                                    <div style="font-size: 20px; font-weight: 500; color: #202124; margin-bottom: 16px; word-wrap: break-word;"
-                                        id="preview-subject-display">
-                                        (Subject will appear here)
-                                    </div>
-                                </div>
-
-                                <!-- Body -->
-                                <div style="padding: 0 16px 16px 16px; border-top: 1px solid #e8e8e8; padding-top: 12px;">
-                                    <div id="preview-body-email"
-                                        style="color: #3c4043; font-size: 16px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
-                                        (Your message will appear here)
-                                    </div>
-
-                                    <!-- PDF Attachment -->
-                                    <div id="preview-pdf-email" style="margin-top: 16px; display: none;">
-                                        <div
-                                            style="display: flex; align-items: center; gap: 12px; background: #f8f9fa; border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; width: fit-content;">
-                                            <div
-                                                style="width: 36px; height: 36px; background: #e74c3c; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                                <span style="color: #fff; font-size: 20px;">📄</span>
-                                            </div>
-                                            <div>
-                                                <div style="font-size: 14px; font-weight: 500; color: #202124;">Invoice.pdf
-                                                </div>
-                                                <div style="font-size: 12px; color: #5f6368;">Attached file</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Empty State -->
+                        <div id="preview-empty" class="text-center text-white">
+                            <i class="ri-phone-line" style="font-size: 64px; opacity: 0.5;"></i>
+                            <h5 class="mt-3 mb-2">Select a channel to see preview</h5>
+                            <p class="opacity-75">Choose WhatsApp or SMS to preview your message</p>
                         </div>
 
                         <!-- WhatsApp Preview -->
-                        <div id="preview-whatsapp" style="display: none; width: 100%; max-width: 380px;">
-                            <!-- Phone Frame -->
+                        <div id="preview-whatsapp" style="display: none; width: 100%; max-width: 360px;">
                             <div
-                                style="background: #000; border-radius: 40px; padding: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-                                <!-- Notch -->
-                                <div
-                                    style="background: #000; height: 28px; border-radius: 0 0 20px 20px; margin: -12px -12px 0 -12px; margin-bottom: 0;">
-                                </div>
-
-                                <!-- Screen Content -->
-                                <div
-                                    style="background: #ece5dd; border-radius: 28px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
-                                    <!-- WhatsApp Header -->
+                                style="background: #000; border-radius: 40px; padding: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                                <!-- Screen -->
+                                <div style="background: #ece5dd; border-radius: 28px; overflow: hidden;">
+                                    <!-- Header -->
                                     <div
                                         style="background: #075e54; color: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
-                                        <span style="font-size: 24px;"><i class="ri-arrow-left-line"></i></span>
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1200px-WhatsApp.svg.png"
-                                            alt="Avatar"
-                                            style="width: 36px; height: 36px; border-radius: 50%; background: #fff; padding: 4px;">
+                                        <div
+                                            style="width: 36px; height: 36px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                            💼
+                                        </div>
                                         <div>
-                                            <div style="font-size: 14px; font-weight: 500;">
-                                                {{ auth()->user()->business->business_name }}</div>
-                                            <div style="font-size: 12px; opacity: 0.8;">Online</div>
+                                            <div style="font-size: 14px; font-weight: 500;">Your Business</div>
+                                            <div style="font-size: 11px; opacity: 0.8;">Online</div>
                                         </div>
                                     </div>
 
                                     <!-- Chat Area -->
-                                    <div
-                                        style="padding: 16px; height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-                                        <!-- Incoming Message -->
+                                    <div style="padding: 16px; min-height: 400px;">
                                         <div style="text-align: left;">
-                                            <div style="background: #fff; color: #000; padding: 12px 14px; border-radius: 18px 18px 18px 4px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.06);"
+                                            <div style="background: #fff; color: #000; padding: 8px 12px; border-radius: 12px 12px 12px 4px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1); white-space: pre-wrap;"
                                                 id="preview-body-whatsapp">
-                                                (Your message will appear here)
+                                                Your message will appear here...
                                             </div>
-                                            <div style="font-size: 12px; color: #888; margin-top: 4px; padding: 0 8px;">
-                                                10:30 AM</div>
-                                        </div>
-
-                                        <!-- PDF Attachment -->
-                                        <div id="preview-pdf-wa"
-                                            style="text-align: left; display: none; margin-top: 8px;">
-                                            <div
-                                                style="display: flex; align-items: center; gap: 8px; background: #e3f2fd; border-radius: 12px; padding: 8px 12px; width: fit-content; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
-                                                <span style="font-size: 24px;">📄</span>
-                                                <div>
-                                                    <div style="font-size: 13px; font-weight: 500; color: #1565c0;">
-                                                        Invoice.pdf</div>
-                                                    <div style="font-size: 11px; color: #666;">1.2 MB</div>
-                                                </div>
+                                            <div style="font-size: 11px; color: #667781; margin-top: 4px; padding: 0 8px;">
+                                                <i class="ri-check-double-line"></i> 10:30 AM
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Input Area -->
                                     <div
-                                        style="background: #fff; border-top: 1px solid #ddd; padding: 12px 16px; display: flex; gap: 8px; align-items: center;">
-                                        <span style="font-size: 20px; cursor: pointer;">😊</span>
-                                        <input type="text" placeholder="Type a message..."
-                                            style="flex: 1; border: none; padding: 8px 12px; border-radius: 20px; background: #f0f0f0; font-size: 14px;">
-                                        <span style="font-size: 20px; cursor: pointer;">➤</span>
+                                        style="background: #f0f0f0; padding: 8px 12px; display: flex; gap: 8px; align-items: center;">
+                                        <span style="font-size: 20px;">😊</span>
+                                        <div
+                                            style="flex: 1; background: #fff; border-radius: 20px; padding: 8px 12px; font-size: 13px; color: #999;">
+                                            Type a message...
+                                        </div>
+                                        <span style="font-size: 20px;">🎤</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SMS Preview -->
+                        <div id="preview-sms" style="display: none; width: 100%; max-width: 340px;">
+                            <div
+                                style="background: #000; border-radius: 40px; padding: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                                <!-- Screen -->
+                                <div style="background: #000; border-radius: 28px; overflow: hidden; padding: 20px 16px;">
+                                    <!-- Time -->
+                                    <div style="text-align: center; color: #fff; font-size: 12px; margin-bottom: 20px;">
+                                        10:30 AM
+                                    </div>
+
+                                    <!-- SMS Bubble -->
+                                    <div style="background: #34C759; color: #fff; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);"
+                                        id="preview-body-sms">
+                                        Your message will appear here...
+                                    </div>
+
+                                    <div style="text-align: right; margin-top: 6px;">
+                                        <span style="color: #8E8E93; font-size: 11px;">Delivered</span>
                                     </div>
                                 </div>
                             </div>
@@ -213,96 +244,96 @@
             </div>
         </div>
     </div>
+@endsection
 
+@section('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const channelSelect = document.getElementById('channel');
-            const emailFields = document.getElementById('email-fields');
-            const whatsappHelp = document.getElementById('whatsapp-help');
-            const subjectInput = document.getElementById('subject');
-            const contentInput = document.getElementById('content');
-            const previewEmail = document.getElementById('preview-email');
-            const previewWhatsapp = document.getElementById('preview-whatsapp');
-            const previewSubject = document.getElementById('preview-subject-display');
-            const previewBodyEmail = document.getElementById('preview-body-email');
-            const previewBodyWhatsapp = document.getElementById('preview-body-whatsapp');
+        const channelSelect = document.getElementById('channel');
+        const contentInput = document.getElementById('content');
+        const previewEmpty = document.getElementById('preview-empty');
+        const previewWhatsapp = document.getElementById('preview-whatsapp');
+        const previewSms = document.getElementById('preview-sms');
+        const previewBodyWhatsapp = document.getElementById('preview-body-whatsapp');
+        const previewBodySms = document.getElementById('preview-body-sms');
+        const smsLimitCard = document.getElementById('sms-limit-card');
+        const charCount = document.getElementById('char-count');
+        const charProgress = document.getElementById('char-progress');
+        const smsParts = document.getElementById('sms-parts');
 
-            // Sample variables for preview
-            const sampleVariables = {
-                'client_name': 'John Doe',
-                'invoice_number': 'INV-2024-001',
-                'amount': '$0.00',
-                'due_date': '31 Jan 2025'
-            };
+        // Sample data for preview
+        const sampleData = {
+            'client_name': 'John Doe',
+            'invoice_number': 'INV-2026-001',
+            'amount': '$1,500.00',
+            'due_date': 'Jan 15, 2026',
+            'invoice_link': 'https://yourapp.com/invoice/123',
+            'business_name': 'Your Business'
+        };
 
-            function replaceSampleVariables(text) {
-                let processed = text;
-                Object.entries(sampleVariables).forEach(([key, value]) => {
-                    const regex = new RegExp(`@{{ \\
+
+        function replacePlaceholders(text) {
+            let result = text;
+            Object.entries(sampleData).forEach(([key, value]) => {
+                const regex = new RegExp(`@{{ \\
 s * $ {
     key
 }\\
 s * }}`, 'g');
-                    processed = processed.replace(regex,
-                        `<strong style="color: #2196F3; background: #E3F2FD; padding: 2px 6px; border-radius: 4px;">${value}</strong>`
-                    );
-                });
-                return processed;
-            }
-
-            function updatePreview() {
-                const channel = channelSelect.value;
-                const subject = subjectInput.value || '(Subject will appear here)';
-                const content = contentInput.value || '(Your message will appear here)';
-
-                if (channel === 'email') {
-                    previewEmail.style.display = '';
-                    previewWhatsapp.style.display = 'none';
-                    previewSubject.textContent = subject;
-                    previewBodyEmail.innerHTML = replaceSampleVariables(content);
-                } else {
-                    previewEmail.style.display = 'none';
-                    previewWhatsapp.style.display = '';
-                    previewBodyWhatsapp.innerHTML = replaceSampleVariables(content);
-                }
-            }
-
-            channelSelect.addEventListener('change', function() {
-                if (this.value === 'email') {
-                    emailFields.style.display = '';
-                    whatsappHelp.style.display = 'none';
-                } else {
-                    emailFields.style.display = 'none';
-                    whatsappHelp.style.display = '';
-                }
-                updatePreview();
+                result = result.replace(regex, value);
             });
+            return result || 'Your message will appear here...';
+        }
 
-            subjectInput.addEventListener('input', updatePreview);
-            contentInput.addEventListener('input', updatePreview);
+        function updatePreview() {
+            const channel = channelSelect.value;
+            const content = contentInput.value;
+            const processedContent = replacePlaceholders(content);
 
-            updatePreview();
-        });
-    </script>
-@endsection
-@section('scripts')
-    <!-- QUILL EDITOR JS -->
-    <script src="{{ asset('build/assets/libs/quill/quill.min.js') }}"></script>
+            // Hide all previews
+            previewEmpty.style.display = 'none';
+            previewWhatsapp.style.display = 'none';
+            previewSms.style.display = 'none';
+            smsLimitCard.style.display = 'none';
 
-    <!-- INTERNAL QUILL JS -->
-    @vite('resources/assets/js/quill-editor.js')
+            // Show appropriate preview
+            if (channel === 'whatsapp') {
+                previewWhatsapp.style.display = '';
+                previewBodyWhatsapp.textContent = processedContent;
+            } else if (channel === 'sms') {
+                previewSms.style.display = '';
+                previewBodySms.textContent = processedContent;
+                smsLimitCard.style.display = '';
+                updateCharCount(content.length);
+            } else {
+                previewEmpty.style.display = '';
+            }
+        }
 
-    <script>
-        $(document).ready(function() {
+        function updateCharCount(count) {
+            charCount.textContent = count;
+            const parts = Math.ceil(count / 160) || 1;
+            smsParts.textContent = `${parts} SMS`;
 
-            // Initialize Quill editor
-            var quill = new Quill("#editorContent", {
-                theme: "snow",
-            });
-            // On form submit, set the hidden input value to the Quill editor content
-            document.querySelector('form').onsubmit = function() {
-                document.querySelector('input[name=content]').value = quill.root.innerHTML;
-            };
-        });
+            const percentage = (count % 160) / 160 * 100;
+            charProgress.style.width = percentage + '%';
+
+            if (count > 160) {
+                charProgress.classList.remove('bg-success', 'bg-warning');
+                charProgress.classList.add('bg-danger');
+            } else if (count > 120) {
+                charProgress.classList.remove('bg-success', 'bg-danger');
+                charProgress.classList.add('bg-warning');
+            } else {
+                charProgress.classList.remove('bg-warning', 'bg-danger');
+                charProgress.classList.add('bg-success');
+            }
+        }
+
+        // Event listeners
+        channelSelect.addEventListener('change', updatePreview);
+        contentInput.addEventListener('input', updatePreview);
+
+        // Initial preview
+        updatePreview();
     </script>
 @endsection

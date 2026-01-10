@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::table('email_templates', function (Blueprint $table): void {
             $table->boolean('is_active')->default(true)->after('is_default');
             $table->softDeletes();
-            
+
             // Add unique constraint for name per user
             $table->unique(['user_id', 'name'], 'unique_template_name_per_user');
         });

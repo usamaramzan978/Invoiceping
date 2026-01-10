@@ -131,6 +131,9 @@
 
         <!-- END FOOTER -->
 
+        <!-- GLOBAL DELETE MODAL -->
+        @include('components.delete-modal')
+
     </div>
     <!-- END PAGE-->
 

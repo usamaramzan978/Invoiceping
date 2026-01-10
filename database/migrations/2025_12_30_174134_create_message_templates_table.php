@@ -16,12 +16,13 @@ return new class extends Migration
         Schema::create('message_templates', function (Blueprint $table): void {
             $table->uuid('id')->primary();
 
-            $table->uuid('business_id');
-            $table->foreign('business_id')->references('id')->on('business_profiles')->cascadeOnDelete();
+            $table->uuid('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
 
             $table->string('name', 100); // e.g. "Default WhatsApp Reminder"
-            $table->string('channel', 20)->default('email'); // ['whatsapp', 'email']
+            $table->string('channel', 20)->default('whatsapp'); // ['whatsapp', 'sms']
             $table->longText('content');
+            $table->string('type', 20)->nullable(); // reminder, welcome, followup, custom
             /*
               Example:
               Hi {client_name}, this is a reminder for invoice {invoice_number}
@@ -34,7 +35,8 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['business_id', 'channel']);
+            $table->index(['channel', 'type']);
+            $table->softDeletes();
         });
     }
 

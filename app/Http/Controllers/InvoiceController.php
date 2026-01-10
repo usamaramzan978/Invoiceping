@@ -9,8 +9,10 @@ use App\Actions\Invoice\UpdateInvoiceAction;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Client;
+use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\MessageTemplates;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,25 +42,25 @@ final class InvoiceController extends Controller
 
         // Calculate statistics
         $stats = [
-            'total_count' => Invoice::where('business_id', $businessId)->count(),
-            'total_amount' => Invoice::where('business_id', $businessId)->sum('total_amount'),
-            'paid_count' => Invoice::where('business_id', $businessId)
+            'total_count' => Invoice::query()->where('business_id', $businessId)->count(),
+            'total_amount' => Invoice::query()->where('business_id', $businessId)->sum('total_amount'),
+            'paid_count' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'paid')
                 ->count(),
-            'paid_amount' => Invoice::where('business_id', $businessId)
+            'paid_amount' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'paid')
                 ->sum('total_amount'),
-            'pending_count' => Invoice::where('business_id', $businessId)
+            'pending_count' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->count(),
-            'pending_amount' => Invoice::where('business_id', $businessId)
+            'pending_amount' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->sum('total_amount'),
-            'overdue_count' => Invoice::where('business_id', $businessId)
+            'overdue_count' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->where('due_date', '<', now())
                 ->count(),
-            'overdue_amount' => Invoice::where('business_id', $businessId)
+            'overdue_amount' => Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->where('due_date', '<', now())
                 ->sum('total_amount'),
@@ -154,19 +156,66 @@ final class InvoiceController extends Controller
         return view('dashboard.invoices.preview', ['invoiceData' => $invoiceData]);
     }
 
-    public function destroy(Invoice $invoice): RedirectResponse
+    public function destroy(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
         $invoice->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice deleted successfully!',
+                'redirect' => route('invoices.index'),
+            ]);
+        }
 
         return to_route('invoices.index')->with('success', 'Invoice deleted successfully.');
     }
 
     public function allForBusiness(Request $request)
     {
-        $business = Auth::user()->business;
-        $templates = MessageTemplates::query()->where('business_id', $business->id)->get();
+        $userId = Auth::user()->id;
 
-        return response()->json($templates);
+        // Get email templates from email_templates table
+        $emailTemplates = EmailTemplate::query()
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($template): array {
+                // Extract content from template_html or template_json
+                $content = $template->template_html;
+                if (! $content && $template->template_json) {
+                    // If template_json is an array, try to extract text
+                    $content = is_array($template->template_json) ? json_encode($template->template_json) : $template->template_json;
+                }
+
+                return [
+                    'id' => $template->id,
+                    'name' => $template->name,
+                    'subject' => $template->subject,
+                    'content' => $content ?? 'Email template content',
+                    'channel' => 'email',
+                    'is_default' => $template->is_default,
+                ];
+            });
+
+        // Get WhatsApp/SMS templates from message_templates table
+        $messageTemplates = MessageTemplates::query()
+            ->where('user_id', $userId)
+            ->where('is_active', true)
+            ->whereIn('channel', ['whatsapp', 'sms'])
+            ->get()
+            ->map(fn ($template): array => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'content' => $template->content,
+                'channel' => $template->channel,
+                'is_default' => $template->is_default,
+            ]);
+
+        // Combine both template types
+        $allTemplates = $emailTemplates->merge($messageTemplates);
+
+        return response()->json($allTemplates->values());
     }
 
     /**
@@ -191,24 +240,24 @@ final class InvoiceController extends Controller
             $months[] = $date->format('M');
 
             // Total invoices count for the month
-            $total[] = Invoice::where('business_id', $businessId)
+            $total[] = Invoice::query()->where('business_id', $businessId)
                 ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                 ->count();
 
             // Paid invoices count
-            $paid[] = Invoice::where('business_id', $businessId)
+            $paid[] = Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'paid')
                 ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                 ->count();
 
             // Pending invoices count
-            $pending[] = Invoice::where('business_id', $businessId)
+            $pending[] = Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
                 ->count();
 
             // Overdue invoices count
-            $overdue[] = Invoice::where('business_id', $businessId)
+            $overdue[] = Invoice::query()->where('business_id', $businessId)
                 ->where('status', 'sent')
                 ->where('due_date', '<', now())
                 ->whereBetween('created_at', [$startOfMonth, $endOfMonth])

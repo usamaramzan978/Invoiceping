@@ -32,8 +32,6 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('message-templates-invoice', [InvoiceController::class, 'allForBusiness'])->name('message-templates-invoice');
     Route::post('invoices/send-message', [SendInvoiceMessageController::class, 'send'])->name('invoices.send-message');
 
-    Route::resource('message/templates', MessageTemplateController::class);
-
     // Reminder Rules
     Route::patch('reminder-rules/{rule}/toggle-status', [ReminderRuleController::class, 'toggleStatus'])->name('reminder-rules.toggle-status');
     Route::resource('reminder-rules', ReminderRuleController::class)->parameters([
@@ -47,11 +45,9 @@ Route::middleware(['auth'])->group(function (): void {
         'schedule-reminders' => 'schedule',
     ]);
 
-    Route::get('email/templates', [EmailTemplateController::class, 'indexView'])->name('email.templates.index');
+    // Route::get('email/templates', [EmailTemplateController::class, 'indexView'])->name('email.templates.index');
+    Route::resource('message/templates', MessageTemplateController::class);
     Route::get('email/templates/create', [EmailTemplateController::class, 'create'])->name('email.templates.create');
-    
-    // Test route for debugging
-    Route::get('test-email-api', fn() => view('test-email-api'))->name('test.email.api');
 
     // Email Template API Routes
     Route::prefix('api/email-templates')->name('api.email-templates.')->group(function (): void {

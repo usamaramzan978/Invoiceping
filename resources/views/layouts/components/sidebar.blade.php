@@ -100,15 +100,20 @@
                 <li class="slide has-sub">
                     <a href="javascript:void(0);" class="side-menu__item">
                         <i class="bx bx-message-rounded-dots side-menu__icon"></i>
-                        <span class="side-menu__label">Message Templates</span>
+                        <span class="side-menu__label">Templates</span>
                         <i class="fe fe-chevron-right side-menu__angle"></i>
                     </a>
                     <ul class="slide-menu child1">
                         <li class="slide">
+                            <a href="{{ route('email.templates.create') }}" class="side-menu__item">
+                                <span class="side-menu__label">Email Builder</span>
+                            </a>
+                        </li>
+                        <li class="slide">
                             <a href="{{ route('templates.index') }}" class="side-menu__item">All Templates</a>
                         </li>
                         <li class="slide">
-                            <a href="{{ route('templates.create') }}" class="side-menu__item">Create Template</a>
+                            <a href="{{ route('templates.create') }}" class="side-menu__item">Watsapp Template</a>
                         </li>
                     </ul>
                 </li>
@@ -169,13 +174,6 @@
                     <a href="{{ route('billing.invoices.index') }}" class="side-menu__item">
                         <i class="bx bx-receipt side-menu__icon"></i>
                         <span class="side-menu__label">Invoices</span>
-                    </a>
-                </li>
-
-                <li class="slide">
-                    <a href="{{ route('email.templates.create') }}" class="side-menu__item">
-                        <i class="bx bx-receipt side-menu__icon"></i>
-                        <span class="side-menu__label">Email Tempalte Builder</span>
                     </a>
                 </li>
 

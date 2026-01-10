@@ -112,32 +112,81 @@
                                                                     ->toArray()
                                                                 : []);
                                                     @endphp
-                                                    @foreach (['email', 'whatsapp'] as $channel)
-                                                        @php
-                                                            $selectedTemplate =
-                                                                collect($channels)->firstWhere('channel', $channel)[
-                                                                    'message_template_id'
-                                                                ] ?? null;
-                                                        @endphp
-                                                        <div class="input-group mb-2">
-                                                            <span class="input-group-text"
-                                                                style="width: 100px;">{{ ucfirst($channel) }}</span>
-                                                            <input type="hidden"
-                                                                name="steps[{{ $index }}][channels][{{ $channel }}][channel]"
-                                                                value="{{ $channel }}">
-                                                            <select
-                                                                name="steps[{{ $index }}][channels][{{ $channel }}][message_template_id]"
-                                                                class="form-select select2-single">
-                                                                <option value="">Select Template</option>
-                                                                @foreach ($templates->where('channel', $channel) as $template)
-                                                                    <option value="{{ $template->id }}"
-                                                                        {{ $selectedTemplate == $template->id ? 'selected' : '' }}>
-                                                                        {{ $template->name }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                    @endforeach
+                                                    {{-- Email Template (from email_templates table) --}}
+                                                    @php
+                                                        $selectedEmailTemplate =
+                                                            collect($channels)->firstWhere('channel', 'email')[
+                                                                'email_template_id'
+                                                            ] ?? null;
+                                                    @endphp
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text" style="width: 100px;">📧 Email</span>
+                                                        <input type="hidden"
+                                                            name="steps[{{ $index }}][channels][email][channel]"
+                                                            value="email">
+                                                        <select
+                                                            name="steps[{{ $index }}][channels][email][email_template_id]"
+                                                            class="form-select select2-single">
+                                                            <option value="">Select Template</option>
+                                                            @foreach ($emailTemplates as $template)
+                                                                <option value="{{ $template->id }}"
+                                                                    {{ $selectedEmailTemplate == $template->id ? 'selected' : '' }}>
+                                                                    {{ $template->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    {{-- WhatsApp Template (from message_templates table) --}}
+                                                    @php
+                                                        $selectedWhatsAppTemplate =
+                                                            collect($channels)->firstWhere('channel', 'whatsapp')[
+                                                                'message_template_id'
+                                                            ] ?? null;
+                                                    @endphp
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text" style="width: 100px;">📱
+                                                            WhatsApp</span>
+                                                        <input type="hidden"
+                                                            name="steps[{{ $index }}][channels][whatsapp][channel]"
+                                                            value="whatsapp">
+                                                        <select
+                                                            name="steps[{{ $index }}][channels][whatsapp][message_template_id]"
+                                                            class="form-select select2-single">
+                                                            <option value="">Select Template</option>
+                                                            @foreach ($messageTemplates->where('channel', 'whatsapp') as $template)
+                                                                <option value="{{ $template->id }}"
+                                                                    {{ $selectedWhatsAppTemplate == $template->id ? 'selected' : '' }}>
+                                                                    {{ $template->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    {{-- SMS Template (from message_templates table) --}}
+                                                    {{-- @php
+                                                        $selectedSMSTemplate =
+                                                            collect($channels)->firstWhere('channel', 'sms')[
+                                                                'message_template_id'
+                                                            ] ?? null;
+                                                    @endphp
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text" style="width: 100px;">💬 SMS</span>
+                                                        <input type="hidden"
+                                                            name="steps[{{ $index }}][channels][sms][channel]"
+                                                            value="sms">
+                                                        <select
+                                                            name="steps[{{ $index }}][channels][sms][message_template_id]"
+                                                            class="form-select select2-single">
+                                                            <option value="">Select Template</option>
+                                                            @foreach ($messageTemplates->where('channel', 'sms') as $template)
+                                                                <option value="{{ $template->id }}"
+                                                                    {{ $selectedSMSTemplate == $template->id ? 'selected' : '' }}>
+                                                                    {{ $template->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div> --}}
                                                 </div>
                                             </div>
                                         </div>
@@ -185,20 +234,42 @@
                     <div class="col-md-4">
                         <label class="form-label">Channels & Templates</label>
                         <div class="channel-list">
-                            @foreach (['email', 'whatsapp'] as $channel)
-                                <div class="input-group mb-2">
-                                    <span class="input-group-text" style="width: 100px;">{{ ucfirst($channel) }}</span>
-                                    <input type="hidden" name="steps[__INDEX__][channels][{{ $channel }}][channel]"
-                                        value="{{ $channel }}">
-                                    <select name="steps[__INDEX__][channels][{{ $channel }}][message_template_id]"
-                                        class="form-select select2-single">
-                                        <option value="">Select Template</option>
-                                        @foreach ($templates->where('channel', $channel) as $template)
-                                            <option value="{{ $template->id }}">{{ $template->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endforeach
+                            {{-- Email --}}
+                            <div class="input-group mb-2">
+                                <span class="input-group-text" style="width: 100px;">📧 Email</span>
+                                <input type="hidden" name="steps[__INDEX__][channels][email][channel]" value="email">
+                                <select name="steps[__INDEX__][channels][email][email_template_id]"
+                                    class="form-select select2-single">
+                                    <option value="">Select Template</option>
+                                    @foreach ($emailTemplates as $template)
+                                        <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            {{-- WhatsApp --}}
+                            <div class="input-group mb-2">
+                                <span class="input-group-text" style="width: 100px;">📱 WhatsApp</span>
+                                <input type="hidden" name="steps[__INDEX__][channels][whatsapp][channel]"
+                                    value="whatsapp">
+                                <select name="steps[__INDEX__][channels][whatsapp][message_template_id]"
+                                    class="form-select select2-single">
+                                    <option value="">Select Template</option>
+                                    @foreach ($messageTemplates->where('channel', 'whatsapp') as $template)
+                                        <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            {{-- SMS --}}
+                            {{-- <div class="input-group mb-2">
+                                <span class="input-group-text" style="width: 100px;">💬 SMS</span>
+                                <input type="hidden" name="steps[__INDEX__][channels][sms][channel]" value="sms">
+                                <select name="steps[__INDEX__][channels][sms][message_template_id]" class="form-select select2-single">
+                                    <option value="">Select Template</option>
+                                    @foreach ($messageTemplates->where('channel', 'sms') as $template)
+                                        <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div> --}}
                         </div>
                     </div>
                 </div>
@@ -209,9 +280,8 @@
 
 @section('scripts')
     <script>
-
         document.addEventListener('DOMContentLoaded', function() {
-            
+
             //Needed to Reinitialize Select2 so that it wokrs on dynamically added elements
             $('.select2-single').select2();
 

@@ -184,7 +184,7 @@ describe('Email Template Show', function (): void {
     it('returns a specific template for authenticated user', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->actingAs($this->user)->getJson("/api/email-templates/{$template->id}");
+        $response = $this->actingAs($this->user)->getJson('/api/email-templates/'.$template->id);
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -206,7 +206,7 @@ describe('Email Template Show', function (): void {
         $otherUser = User::factory()->create();
         $template = EmailTemplate::factory()->create(['user_id' => $otherUser->id]);
 
-        $response = $this->actingAs($this->user)->getJson("/api/email-templates/{$template->id}");
+        $response = $this->actingAs($this->user)->getJson('/api/email-templates/'.$template->id);
 
         $response->assertNotFound();
     });
@@ -214,7 +214,7 @@ describe('Email Template Show', function (): void {
     it('requires authentication', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->getJson("/api/email-templates/{$template->id}");
+        $response = $this->getJson('/api/email-templates/'.$template->id);
 
         $response->assertUnauthorized();
     });
@@ -232,7 +232,7 @@ describe('Email Template Update', function (): void {
             'subject' => 'Updated Subject',
         ];
 
-        $response = $this->actingAs($this->user)->patchJson("/api/email-templates/{$template->id}", $data);
+        $response = $this->actingAs($this->user)->patchJson('/api/email-templates/'.$template->id, $data);
 
         $response->assertOk()
             ->assertJson([
@@ -254,7 +254,7 @@ describe('Email Template Update', function (): void {
             'subject' => 'Original Subject',
         ]);
 
-        $response = $this->actingAs($this->user)->patchJson("/api/email-templates/{$template->id}", [
+        $response = $this->actingAs($this->user)->patchJson('/api/email-templates/'.$template->id, [
             'name' => 'Updated',
         ]);
 
@@ -278,7 +278,7 @@ describe('Email Template Update', function (): void {
             'name' => 'Template To Update',
         ]);
 
-        $response = $this->actingAs($this->user)->patchJson("/api/email-templates/{$template->id}", [
+        $response = $this->actingAs($this->user)->patchJson('/api/email-templates/'.$template->id, [
             'name' => 'Existing Name',
         ]);
 
@@ -297,7 +297,7 @@ describe('Email Template Update', function (): void {
             'is_default' => false,
         ]);
 
-        $response = $this->actingAs($this->user)->patchJson("/api/email-templates/{$template->id}", [
+        $response = $this->actingAs($this->user)->patchJson('/api/email-templates/'.$template->id, [
             'is_default' => true,
         ]);
 
@@ -318,7 +318,7 @@ describe('Email Template Update', function (): void {
         $otherUser = User::factory()->create();
         $template = EmailTemplate::factory()->create(['user_id' => $otherUser->id]);
 
-        $response = $this->actingAs($this->user)->patchJson("/api/email-templates/{$template->id}", [
+        $response = $this->actingAs($this->user)->patchJson('/api/email-templates/'.$template->id, [
             'name' => 'Hacked',
         ]);
 
@@ -328,7 +328,7 @@ describe('Email Template Update', function (): void {
     it('requires authentication', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->patchJson("/api/email-templates/{$template->id}", [
+        $response = $this->patchJson('/api/email-templates/'.$template->id, [
             'name' => 'Updated',
         ]);
 
@@ -343,7 +343,7 @@ describe('Email Template Delete', function (): void {
             'is_default' => false,
         ]);
 
-        $response = $this->actingAs($this->user)->deleteJson("/api/email-templates/{$template->id}");
+        $response = $this->actingAs($this->user)->deleteJson('/api/email-templates/'.$template->id);
 
         $response->assertOk()
             ->assertJson([
@@ -362,7 +362,7 @@ describe('Email Template Delete', function (): void {
             'is_default' => true,
         ]);
 
-        $response = $this->actingAs($this->user)->deleteJson("/api/email-templates/{$template->id}");
+        $response = $this->actingAs($this->user)->deleteJson('/api/email-templates/'.$template->id);
 
         $response->assertUnprocessable()
             ->assertJson([
@@ -379,7 +379,7 @@ describe('Email Template Delete', function (): void {
         $otherUser = User::factory()->create();
         $template = EmailTemplate::factory()->create(['user_id' => $otherUser->id]);
 
-        $response = $this->actingAs($this->user)->deleteJson("/api/email-templates/{$template->id}");
+        $response = $this->actingAs($this->user)->deleteJson('/api/email-templates/'.$template->id);
 
         $response->assertNotFound();
     });
@@ -387,7 +387,7 @@ describe('Email Template Delete', function (): void {
     it('requires authentication', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->deleteJson("/api/email-templates/{$template->id}");
+        $response = $this->deleteJson('/api/email-templates/'.$template->id);
 
         $response->assertUnauthorized();
     });
@@ -400,7 +400,7 @@ describe('Email Template Set Default', function (): void {
             'is_default' => false,
         ]);
 
-        $response = $this->actingAs($this->user)->postJson("/api/email-templates/{$template->id}/set-default");
+        $response = $this->actingAs($this->user)->postJson(sprintf('/api/email-templates/%d/set-default', $template->id));
 
         $response->assertOk()
             ->assertJson([
@@ -425,7 +425,7 @@ describe('Email Template Set Default', function (): void {
             'is_default' => false,
         ]);
 
-        $response = $this->actingAs($this->user)->postJson("/api/email-templates/{$newDefault->id}/set-default");
+        $response = $this->actingAs($this->user)->postJson(sprintf('/api/email-templates/%d/set-default', $newDefault->id));
 
         $response->assertOk();
 
@@ -454,9 +454,9 @@ describe('Email Template Set Default', function (): void {
             'is_default' => false,
         ]);
 
-        $this->actingAs($this->user)->postJson("/api/email-templates/{$template2->id}/set-default");
+        $this->actingAs($this->user)->postJson(sprintf('/api/email-templates/%d/set-default', $template2->id));
 
-        $defaultCount = EmailTemplate::where('user_id', $this->user->id)
+        $defaultCount = EmailTemplate::query()->where('user_id', $this->user->id)
             ->where('is_default', true)
             ->count();
 
@@ -466,7 +466,7 @@ describe('Email Template Set Default', function (): void {
     it('requires authentication', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->postJson("/api/email-templates/{$template->id}/set-default");
+        $response = $this->postJson(sprintf('/api/email-templates/%d/set-default', $template->id));
 
         $response->assertUnauthorized();
     });
@@ -479,7 +479,7 @@ describe('Email Template Toggle Active', function (): void {
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($this->user)->postJson("/api/email-templates/{$template->id}/toggle-active");
+        $response = $this->actingAs($this->user)->postJson(sprintf('/api/email-templates/%d/toggle-active', $template->id));
 
         $response->assertOk();
 
@@ -495,7 +495,7 @@ describe('Email Template Toggle Active', function (): void {
             'is_active' => false,
         ]);
 
-        $response = $this->actingAs($this->user)->postJson("/api/email-templates/{$template->id}/toggle-active");
+        $response = $this->actingAs($this->user)->postJson(sprintf('/api/email-templates/%d/toggle-active', $template->id));
 
         $response->assertOk();
 
@@ -508,9 +508,8 @@ describe('Email Template Toggle Active', function (): void {
     it('requires authentication', function (): void {
         $template = EmailTemplate::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->postJson("/api/email-templates/{$template->id}/toggle-active");
+        $response = $this->postJson(sprintf('/api/email-templates/%d/toggle-active', $template->id));
 
         $response->assertUnauthorized();
     });
 });
-

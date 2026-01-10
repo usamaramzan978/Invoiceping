@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Models\Invoice;
-use App\Models\MessageTemplates;
+use App\Mail\InvoiceEmail;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -13,179 +12,189 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
+/**
+ * Lightweight job to send pre-processed invoice messages.
+ * All data preparation (template fetching, variable replacement) is done in the Action.
+ */
 final class SendInvoiceMessageJob implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 1;
+    public $tries = 3;
 
-    public $timeout = 60;
+    public $timeout = 30;
 
     /**
      * Create a new job instance.
+     *
+     * @param  string  $channel  Channel type: 'email', 'whatsapp', 'sms'
+     * @param  string  $recipient  Recipient address (email or phone)
+     * @param  string  $content  Pre-processed message content
+     * @param  string|null  $subject  Email subject (only for email channel)
+     * @param  string|null  $fromEmail  Sender email (only for email channel)
      */
-    public function __construct(public string $invoiceId, public string $templateId, public string $channel) {}
+    public function __construct(
+        public string $channel,
+        public string $recipient,
+        public string $content,
+        public ?string $subject = null,
+        public ?string $fromEmail = null,
+    ) {}
 
     /**
-     * Execute the job.
+     * Execute the job - only handles actual sending, no DB queries or processing.
      */
     public function handle(): void
     {
         try {
-            $invoice = Invoice::query()->find($this->invoiceId);
-            $template = MessageTemplates::query()->find($this->templateId);
-
-            // Validate invoice and template exist
-            if (! $invoice) {
-                Log::error('Invoice not found for ID: '.$this->invoiceId);
-
-                return;
-            }
-
-            if (! $template) {
-                Log::error('Template not found for ID: '.$this->templateId);
-
-                return;
-            }
-
-            // Route to appropriate channel
             match ($this->channel) {
-                'email' => $this->sendEmail($invoice, $template),
-                'whatsapp' => $this->sendWhatsApp($invoice, $template),
+                'email' => $this->sendEmail(),
+                'whatsapp' => $this->sendWhatsApp(),
+                'sms' => $this->sendSMS(),
                 default => Log::warning('Unknown channel: '.$this->channel),
             };
         } catch (Exception $exception) {
-            Log::error('Error in SendInvoiceMessageJob: '.$exception->getMessage(), [
-                'invoice_id' => $this->invoiceId,
-                'template_id' => $this->templateId,
+            Log::error('Error in SendInvoiceMessageJob', [
                 'channel' => $this->channel,
-                'exception' => $exception,
+                'recipient' => $this->recipient,
+                'exception' => $exception->getMessage(),
             ]);
-            throw $exception; // Re-throw to trigger retry
+            throw $exception;
         }
     }
 
     /**
-     * Handle job failure
+     * Handle job failure.
      */
     public function failed(Throwable $exception): void
     {
         Log::error('SendInvoiceMessageJob failed after retries', [
-            'invoice_id' => $this->invoiceId,
-            'template_id' => $this->templateId,
             'channel' => $this->channel,
+            'recipient' => $this->recipient,
             'exception' => $exception->getMessage(),
         ]);
     }
 
-    private function sendEmail(Invoice $invoice, MessageTemplates $template): void
-    {
-        // Validate required fields
-        if (! $invoice->client->email) {
-            Log::warning('Customer email is missing for invoice: '.$invoice->id);
-
-            return;
-        }
-
-        if (! $template->content) {
-            Log::warning('Template content is empty for template: '.$template->id);
-
-            return;
-        }
-
-        if (! $template->name) {
-            Log::warning('Template name/subject is empty for template: '.$template->id);
-
-            return;
-        }
-
-        try {
-            // Replace template variables
-            $content = $this->replaceVariables($template->content, $invoice);
-            $subject = $template->name;
-
-            // Send email
-            $recipient = $invoice->client->email ?? null;
-            if (! $recipient) {
-                Log::error('Recipient email is null for invoice '.$invoice->id);
-
-                return;
-            }
-
-            Mail::raw($content, function ($message) use ($recipient, $subject, $invoice): void {
-                $message->to($recipient)
-                    ->from($invoice->business->email ?? config('mail.from.address'))
-                    ->subject($subject);
-            });
-
-            Log::info(sprintf('Email sent successfully to %s for invoice %s', $invoice->customer_email, $invoice->id));
-        } catch (Exception $exception) {
-            Log::error('Failed to send email: '.$exception->getMessage(), [
-                'invoice_id' => $invoice->id,
-                'customer_email' => $invoice->customer_email,
-            ]);
-            throw $exception;
-        }
-    }
-
-    private function sendWhatsApp(Invoice $invoice, MessageTemplates $template): void
-    {
-        // Validate required fields
-        if (! $invoice->customer_phone) {
-            Log::warning('Customer phone is missing for invoice: '.$invoice->id);
-
-            return;
-        }
-
-        if (! $template->content) {
-            Log::warning('Template content is empty for template: '.$template->id);
-
-            return;
-        }
-
-        try {
-            // Replace template variables
-            $message = $this->replaceVariables($template->content, $invoice);
-            $phone = $this->formatPhoneNumber($invoice->customer_phone);
-
-            // Example using your WhatsApp API service
-            // Uncomment and implement based on your service
-            // WhatsAppService::send($phone, $message);
-
-            Log::info(sprintf('WhatsApp message queued for %s for invoice %s', $phone, $invoice->id));
-        } catch (Exception $exception) {
-            Log::error('Failed to send WhatsApp message: '.$exception->getMessage(), [
-                'invoice_id' => $invoice->id,
-                'customer_phone' => $invoice->customer_phone,
-            ]);
-            throw $exception;
-        }
-    }
-
     /**
-     * Replace template variables with invoice data
+     * Send email message.
      */
-    private function replaceVariables(string $text, Invoice $invoice): string
+    private function sendEmail(): void
     {
-        return str_replace(
-            [
-                '@{{ client_name }}',
-                '@{{ invoice_number }}',
-                '@{{ amount }}',
-                '@{{ due_date }}',
-            ],
-            [
-                $invoice->client->name ?? 'Customer',
-                $invoice->invoice_number ?? 'N/A',
-                $invoice->total_amount ?? '0.00',
-                $invoice->due_date?->format('d M Y') ?? 'N/A',
-            ],
-            $text
-        );
+        if ($this->recipient === '' || $this->recipient === '0') {
+            Log::warning('Recipient email is empty');
+
+            return;
+        }
+
+        if ($this->content === '' || $this->content === '0') {
+            Log::warning('Email content is empty');
+
+            return;
+        }
+
+        if (in_array($this->subject, [null, '', '0'], true)) {
+            Log::warning('Email subject is empty');
+
+            return;
+        }
+
+        try {
+            // Use Mailable class for proper HTML email rendering
+            Mail::to($this->recipient)->send(
+                new InvoiceEmail(
+                    htmlContent: $this->content,
+                    emailSubject: $this->subject,
+                    fromEmail: $this->fromEmail,
+                )
+            );
+
+            Log::info('Email sent successfully', [
+                'recipient' => $this->recipient,
+                'subject' => $this->subject,
+            ]);
+        } catch (Exception $exception) {
+            Log::error('Failed to send email', [
+                'recipient' => $this->recipient,
+                'exception' => $exception->getMessage(),
+            ]);
+            throw $exception;
+        }
     }
 
     /**
-     * Format phone number (customize based on your requirements)
+     * Send WhatsApp message.
+     */
+    private function sendWhatsApp(): void
+    {
+        if ($this->recipient === '' || $this->recipient === '0') {
+            Log::warning('WhatsApp recipient phone is empty');
+
+            return;
+        }
+
+        if ($this->content === '' || $this->content === '0') {
+            Log::warning('WhatsApp message content is empty');
+
+            return;
+        }
+
+        try {
+            $formattedPhone = $this->formatPhoneNumber($this->recipient);
+
+            // TODO: Integrate with your WhatsApp API service
+            // Example: WhatsAppService::send($formattedPhone, $this->content);
+
+            Log::info('WhatsApp message sent', [
+                'phone' => $formattedPhone,
+                'message_length' => mb_strlen($this->content),
+            ]);
+        } catch (Exception $exception) {
+            Log::error('Failed to send WhatsApp message', [
+                'phone' => $this->recipient,
+                'exception' => $exception->getMessage(),
+            ]);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Send SMS message.
+     */
+    private function sendSMS(): void
+    {
+        if ($this->recipient === '' || $this->recipient === '0') {
+            Log::warning('SMS recipient phone is empty');
+
+            return;
+        }
+
+        if ($this->content === '' || $this->content === '0') {
+            Log::warning('SMS message content is empty');
+
+            return;
+        }
+
+        try {
+            $formattedPhone = $this->formatPhoneNumber($this->recipient);
+
+            // TODO: Integrate with your SMS API service
+            // Example: SMSService::send($formattedPhone, $this->content);
+
+            Log::info('SMS message sent', [
+                'phone' => $formattedPhone,
+                'message_length' => mb_strlen($this->content),
+            ]);
+        } catch (Exception $exception) {
+            Log::error('Failed to send SMS message', [
+                'phone' => $this->recipient,
+                'exception' => $exception->getMessage(),
+            ]);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Format phone number (customize based on your requirements).
      */
     private function formatPhoneNumber(string $phone): string
     {
@@ -194,7 +203,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
 
         // Add country code if not present (customize based on your needs)
         if (! str_starts_with((string) $cleaned, '92')) {
-            // 92 is Pakistan code
+            // 92 is Pakistan code - adjust for your default country
             return '92'.mb_ltrim((string) $cleaned, '0');
         }
 

@@ -10,6 +10,7 @@ use App\Actions\Client\UpdateClientAction;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -60,9 +61,17 @@ final class ClientController extends Controller
         return to_route('clients.index')->with('success', 'Client updated successfully.');
     }
 
-    public function destroy(Client $client): RedirectResponse
+    public function destroy(Request $request, Client $client): RedirectResponse|JsonResponse
     {
         $this->deleteClient->handle($client);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Client deleted successfully!',
+                'redirect' => route('clients.index'),
+            ]);
+        }
 
         return to_route('clients.index')->with('success', 'Client deleted successfully.');
     }

@@ -103,15 +103,18 @@
                                             </a>
 
                                             {{-- Delete --}}
-                                            <form action="{{ route('clients.destroy', $client) }}" method="POST"
-                                                onsubmit="return confirm('Delete this client?');" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-icon btn-sm btn-danger-transparent"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-                                                    <i class="ri-delete-bin-line"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                class="btn btn-icon btn-sm btn-danger-transparent"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Delete"
+                                                data-delete-modal
+                                                data-title="Delete Client"
+                                                data-message="Are you sure you want to delete client '{{ $client->name }}'? This action cannot be undone."
+                                                data-form-id="{{ route('clients.destroy', $client) }}"
+                                                data-record-name="client">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
