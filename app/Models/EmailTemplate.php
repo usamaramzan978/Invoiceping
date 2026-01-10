@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * @property int $id
+ * @property string $user_id
+ * @property string $name
+ * @property string|null $subject
+ * @property array<string, mixed> $template_json
+ * @property string|null $template_html
+ * @property string|null $category
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ */
+final class EmailTemplate extends Model
+{
+    /** @use HasFactory<\Database\Factories\EmailTemplateFactory> */
+    use HasFactory;
+
+    use SoftDeletes;
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'template_json' => 'array',
+        'is_default' => 'boolean',
+        'is_active' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * @return BelongsTo<User, self>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Scope query to only active templates
+     *
+     * @param  Builder<EmailTemplate>  $query
+     * @return Builder<EmailTemplate>
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope query to only default templates
+     *
+     * @param  Builder<EmailTemplate>  $query
+     * @return Builder<EmailTemplate>
+     */
+    public function scopeDefault(Builder $query): Builder
+    {
+        return $query->where('is_default', true);
+    }
+
+    /**
+     * Scope query to templates for a specific user
+     *
+     * @param  Builder<EmailTemplate>  $query
+     * @return Builder<EmailTemplate>
+     */
+    public function scopeForUser(Builder $query, string $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Check if template is default
+     */
+    public function isDefault(): bool
+    {
+        return $this->is_default;
+    }
+
+    /**
+     * Check if template is active
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+}
