@@ -98,6 +98,14 @@ final class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<WhatsAppProvider>
+     */
+    public function whatsappProviders(): HasMany
+    {
+        return $this->hasMany(WhatsAppProvider::class);
+    }
+
+    /**
      * Check if user has an active subscription
      */
     public function hasActiveSubscription(): bool

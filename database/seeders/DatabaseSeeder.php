@@ -22,6 +22,7 @@ final class DatabaseSeeder extends Seeder
             MessageTemplatesSeeder::class,
             ReminderSystemSeeder::class,
             SubscriptionPlanSeeder::class,
+            WhatsAppProviderSeeder::class,
         ]);
     }
 }

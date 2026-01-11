@@ -200,7 +200,7 @@
                     </a>
                     <ul class="slide-menu child1">
                         <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">WhatsApp Integration</a>
+                            <a href="{{ route('whatsapp-providers.index') }}" class="side-menu__item">WhatsApp Providers</a>
                         </li>
                         <li class="slide">
                             <a href="{{ route('logs.index') }}" class="side-menu__item">Logs</a>

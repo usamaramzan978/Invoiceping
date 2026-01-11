@@ -18,6 +18,7 @@ use App\Http\Controllers\SendInvoiceMessageController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionInvoiceController;
 use App\Http\Controllers\SubscriptionPlanController;
+use App\Http\Controllers\WhatsAppProviderController;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
@@ -100,6 +101,11 @@ Route::middleware(['auth'])->group(function (): void {
 
     // ================= LOGS ROUTES =================
     Route::get('logs', [LogController::class, 'index'])->name('logs.index');
+
+    // ================= WHATSAPP PROVIDER ROUTES =================
+    Route::post('whatsapp-providers/{whatsapp_provider}/toggle-status', [WhatsAppProviderController::class, 'toggleStatus'])->name('whatsapp-providers.toggle-status');
+    Route::post('whatsapp-providers/{whatsapp_provider}/set-default', [WhatsAppProviderController::class, 'setDefault'])->name('whatsapp-providers.set-default');
+    Route::resource('whatsapp-providers', WhatsAppProviderController::class);
 
     // ================= ADMIN ROUTES =================
     Route::prefix('admin')->name('admin.')->group(function (): void {
