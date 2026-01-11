@@ -61,6 +61,8 @@ final readonly class SendInvoiceMessageAction
                     channel: $channel,
                     recipient: $preparedData['recipient'],
                     content: $preparedData['content'],
+                    userId: $userId,
+                    invoiceId: $invoice->id,
                     subject: $preparedData['subject'] ?? null,
                     fromEmail: $preparedData['from_email'] ?? null,
                 ));

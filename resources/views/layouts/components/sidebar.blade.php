@@ -88,11 +88,14 @@
                             <a href="{{ route('reminder-rules.index') }}" class="side-menu__item">Reminder Rules</a>
                         </li>
                         <li class="slide">
-                            <a href="{{ route('schedule-reminders.index') }}" class="side-menu__item">Scheduled
-                                Reminders</a>
+                            <a href="{{ route('rule-scheduled.create') }}" class="side-menu__item">Rules Scheduled</a>
                         </li>
                         <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">Reminder Logs</a>
+                            <a href="{{ route('manual-scheduled.create') }}" class="side-menu__item">Manual Scheduled</a>
+                        </li>
+                        <li class="slide">
+                            <a href="{{ route('schedule-reminders.index') }}" class="side-menu__item">All Scheduled
+                            </a>
                         </li>
                     </ul>
                 </li>
@@ -201,6 +204,9 @@
                         </li>
                         <li class="slide">
                             <a href="javascript:void(0);" class="side-menu__item">Twilio Integration</a>
+                        </li>
+                        <li class="slide">
+                            <a href="{{ route('logs.index') }}" class="side-menu__item">Logs</a>
                         </li>
                     </ul>
                 </li>

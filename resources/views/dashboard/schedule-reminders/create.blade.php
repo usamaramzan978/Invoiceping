@@ -18,6 +18,34 @@
             </div>
         </div>
 
+        <!-- Alert Messages -->
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="ri-check-line me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ri-error-warning-line me-2"></i>
+                <strong>Please fix the following errors:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="row">
             <div class="col-xl-8">
                 <div class="card custom-card">
@@ -91,19 +119,46 @@
                                             @enderror
                                         </div>
 
-                                        <!-- Message Template -->
-                                        <div class="col-md-6">
+                                        <!-- Email Template (for email channel) -->
+                                        <div class="col-md-6" id="email-template-section" style="display: none;">
+                                            <label for="email_template_id" class="form-label fw-600">
+                                                <span class="badge bg-info">Step 4</span> Select Email Template
+                                            </label>
+                                            <select name="email_template_id" id="email_template_id"
+                                                class="form-select select2-single">
+                                                <option value="">Select an email template...</option>
+                                                @foreach ($emailTemplates as $template)
+                                                    <option value="{{ $template->id }}"
+                                                        {{ old('email_template_id') == $template->id ? 'selected' : '' }}>
+                                                        {{ $template->name }}
+                                                        @if($template->is_default)
+                                                            <span class="text-muted">(Default)</span>
+                                                        @endif
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('email_template_id')
+                                                <div class="text-danger small">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <!-- Message Template (for WhatsApp/SMS channels) -->
+                                        <div class="col-md-6" id="message-template-section" style="display: none;">
                                             <label for="message_template_id" class="form-label fw-600">
                                                 <span class="badge bg-info">Step 4</span> Select Message Template
                                             </label>
                                             <select name="message_template_id" id="message_template_id"
                                                 class="form-select select2-single">
                                                 <option value="">Select a template...</option>
-                                                @foreach ($templates as $template)
+                                                @foreach ($messageTemplates as $template)
                                                     <option value="{{ $template->id }}"
                                                         data-channel="{{ $template->channel }}"
                                                         {{ old('message_template_id') == $template->id ? 'selected' : '' }}>
                                                         {{ $template->name }}
+                                                        <span class="text-muted">({{ ucfirst($template->channel) }})</span>
+                                                        @if($template->is_default)
+                                                            <span class="text-muted">- Default</span>
+                                                        @endif
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -208,13 +263,16 @@
             const manualSection = document.getElementById('manual-section');
             const ruleSection = document.getElementById('rule-section');
             const channelSelect = document.getElementById('channel');
-            const templateSelect = document.getElementById('message_template_id');
+            const emailTemplateSelect = document.getElementById('email_template_id');
+            const messageTemplateSelect = document.getElementById('message_template_id');
+            const emailTemplateSection = document.getElementById('email-template-section');
+            const messageTemplateSection = document.getElementById('message-template-section');
             const reminderRuleSelect = document.getElementById('reminder_rule_id');
             const scheduledAtContainer = document.getElementById('scheduled-at-container');
             const scheduledAtInput = document.getElementById('scheduled_at');
             const reminderForm = document.getElementById('reminderForm');
 
-            const allTemplateOptions = Array.from(templateSelect.options);
+            const allMessageTemplateOptions = Array.from(messageTemplateSelect.options);
 
             // ========== TOGGLE SECTIONS BASED ON SOURCE TYPE ==========
             function toggleSections() {
@@ -225,15 +283,22 @@
                     ruleSection.style.display = 'none';
                     
                     channelSelect.setAttribute('required', 'required');
-                    templateSelect.setAttribute('required', 'required');
                     reminderRuleSelect.removeAttribute('required');
+                    
+                    // Show/hide template sections based on channel
+                    updateTemplateSections();
                 } else if (selectedSourceType === 'rule') {
                     manualSection.style.display = 'none';
                     ruleSection.style.display = 'block';
                     
                     channelSelect.removeAttribute('required');
-                    templateSelect.removeAttribute('required');
+                    emailTemplateSelect.removeAttribute('required');
+                    messageTemplateSelect.removeAttribute('required');
                     reminderRuleSelect.setAttribute('required', 'required');
+                    
+                    // Hide both template sections
+                    emailTemplateSection.style.display = 'none';
+                    messageTemplateSection.style.display = 'none';
                 }
                 
                 // scheduled_at is always visible and required now
@@ -241,22 +306,49 @@
                 scheduledAtInput.setAttribute('required', 'required');
             }
 
-            // ========== FILTER TEMPLATES BY CHANNEL ==========
-            function filterTemplatesByChannel() {
+            // ========== UPDATE TEMPLATE SECTIONS BASED ON CHANNEL ==========
+            function updateTemplateSections() {
                 const selectedChannel = channelSelect.value;
 
-                templateSelect.innerHTML = '<option value="">Select a template...</option>';
+                if (selectedChannel === 'email') {
+                    emailTemplateSection.style.display = 'block';
+                    messageTemplateSection.style.display = 'none';
+                    emailTemplateSelect.setAttribute('required', 'required');
+                    messageTemplateSelect.removeAttribute('required');
+                    messageTemplateSelect.value = '';
+                } else if (selectedChannel === 'whatsapp' || selectedChannel === 'sms') {
+                    emailTemplateSection.style.display = 'none';
+                    messageTemplateSection.style.display = 'block';
+                    emailTemplateSelect.removeAttribute('required');
+                    messageTemplateSelect.setAttribute('required', 'required');
+                    emailTemplateSelect.value = '';
+                    
+                    // Filter message templates by channel
+                    filterMessageTemplatesByChannel();
+                } else {
+                    emailTemplateSection.style.display = 'none';
+                    messageTemplateSection.style.display = 'none';
+                    emailTemplateSelect.removeAttribute('required');
+                    messageTemplateSelect.removeAttribute('required');
+                }
+            }
 
-                allTemplateOptions.forEach(option => {
+            // ========== FILTER MESSAGE TEMPLATES BY CHANNEL ==========
+            function filterMessageTemplatesByChannel() {
+                const selectedChannel = channelSelect.value;
+
+                messageTemplateSelect.innerHTML = '<option value="">Select a template...</option>';
+
+                allMessageTemplateOptions.forEach(option => {
                     if (option.value === '') return;
 
                     const templateChannel = option.getAttribute('data-channel');
                     if (!selectedChannel || templateChannel === selectedChannel) {
-                        templateSelect.appendChild(option.cloneNode(true));
+                        messageTemplateSelect.appendChild(option.cloneNode(true));
                     }
                 });
 
-                $(templateSelect).select2({
+                $(messageTemplateSelect).select2({
                     allowClear: false,
                     width: '100%'
                 });
@@ -279,10 +371,20 @@
                         alert('Please select a channel');
                         return false;
                     }
-                    if (!templateSelect.value) {
-                        e.preventDefault();
-                        alert('Please select a message template');
-                        return false;
+                    
+                    const selectedChannel = channelSelect.value;
+                    if (selectedChannel === 'email') {
+                        if (!emailTemplateSelect.value) {
+                            e.preventDefault();
+                            alert('Please select an email template');
+                            return false;
+                        }
+                    } else if (selectedChannel === 'whatsapp' || selectedChannel === 'sms') {
+                        if (!messageTemplateSelect.value) {
+                            e.preventDefault();
+                            alert('Please select a message template');
+                            return false;
+                        }
                     }
                 } else if (sourceType === 'rule') {
                     if (!reminderRuleSelect.value) {
@@ -295,6 +397,16 @@
                 if (!scheduledAtInput.value) {
                     e.preventDefault();
                     alert('Please select a scheduled date and time');
+                    return false;
+                }
+
+                // Validate that scheduled date is in the future
+                const scheduledDate = new Date(scheduledAtInput.value);
+                const now = new Date();
+                if (scheduledDate <= now) {
+                    e.preventDefault();
+                    alert('The scheduled date must be in the future. Please select a future date and time.');
+                    scheduledAtInput.focus();
                     return false;
                 }
             });
@@ -310,7 +422,12 @@
                 width: '100%'
             });
 
-            $(templateSelect).select2({
+            $(emailTemplateSelect).select2({
+                allowClear: false,
+                width: '100%'
+            });
+
+            $(messageTemplateSelect).select2({
                 allowClear: false,
                 width: '100%'
             });
@@ -332,13 +449,13 @@
             });
 
             $(channelSelect).on('select2:select', function() {
-                filterTemplatesByChannel();
+                updateTemplateSections();
             });
 
             // ========== INITIALIZE ON LOAD ==========
             toggleSections();
             if (channelSelect.value) {
-                filterTemplatesByChannel();
+                updateTemplateSections();
             }
         });
     </script>

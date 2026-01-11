@@ -4,66 +4,77 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ReminderSourceTypeEnum;
-use App\Enums\ReminderStatusEnum;
+use App\Actions\ReminderSchedule\CancelReminderScheduleAction;
+use App\Actions\ReminderSchedule\CreateReminderScheduleAction;
+use App\Actions\ReminderSchedule\RescheduleReminderAction;
+use App\Actions\ReminderSchedule\UpdateReminderScheduleAction;
+use App\Http\Requests\RescheduleReminderRequest;
+use App\Http\Requests\StoreReminderScheduleRequest;
+use App\Http\Requests\UpdateReminderScheduleRequest;
+use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\MessageTemplates;
 use App\Models\ReminderRule;
 use App\Models\ReminderSchedule;
-use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
-final class ReminderScheduleController
+final class ReminderScheduleController extends Controller
 {
-    public function index(Request $request): View
+    public function __construct(
+        private readonly CreateReminderScheduleAction $createAction,
+        private readonly UpdateReminderScheduleAction $updateAction,
+        private readonly CancelReminderScheduleAction $cancelAction,
+        private readonly RescheduleReminderAction $rescheduleAction
+    ) {}
+
+    /**
+     * Display a listing of reminder schedules.
+     */
+    public function index(): View
     {
+        $user = Auth::user();
+        $business = $user->business;
+
+        abort_unless($business, 404, 'Business profile not found');
+
         /**
-         * STEP 1:
          * Get ONE representative row per logical reminder group
+         * Only show schedules for invoices belonging to user's business
          */
         $subquery = ReminderSchedule::query()
-            ->selectRaw('MIN(id) as id')
+            ->join('invoices', 'reminder_schedules.invoice_id', '=', 'invoices.id')
+            ->where('invoices.business_id', $business->id)
+            ->selectRaw('MIN(reminder_schedules.id) as id')
             ->groupByRaw('
-            COALESCE(bulk_group_id, CAST(id AS CHAR)),
-            reminder_rule_step_id,
-            message_template_id,
-            channel
-        ');
+                COALESCE(reminder_schedules.bulk_group_id, CAST(reminder_schedules.id AS CHAR)),
+                reminder_schedules.reminder_rule_step_id,
+                COALESCE(CAST(reminder_schedules.email_template_id AS CHAR), reminder_schedules.message_template_id),
+                reminder_schedules.channel
+            ');
 
         $query = ReminderSchedule::query()
             ->whereIn('id', $subquery)
             ->with([
                 'invoice.client',
+                'invoice.business',
                 'rule',
                 'step',
                 'messageTemplate',
+                'emailTemplate',
             ])
             ->latest('scheduled_at');
 
         /**
-         * STEP 2:
-         * Filters
-         */
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('invoice_id')) {
-            $query->where('invoice_id', $request->invoice_id);
-        }
-
-        /**
-         * STEP 3:
          * Paginate representative rows
          */
         $schedules = $query->paginate(15);
 
         /**
-         * STEP 4:
          * Load all related schedules for bulk groups (single query)
          */
         $bulkGroupIds = $schedules
@@ -81,7 +92,6 @@ final class ReminderScheduleController
             : collect();
 
         /**
-         * STEP 5:
          * Attach grouped schedules to each row
          */
         foreach ($schedules as $schedule) {
@@ -107,225 +117,181 @@ final class ReminderScheduleController
         ]);
     }
 
+    /**
+     * Show the form for creating a new reminder schedule.
+     */
     public function create(): View
     {
-        $business = auth()->user()->business;
-        $invoices = Invoice::query()->where('business_id', $business->id)->latest()->get();
-        $rules = ReminderRule::query()->where('user_id', auth()->id())
-            ->with(['steps.templates.messageTemplate'])
+        $user = Auth::user();
+        $business = $user->business;
+
+        abort_unless($business, 404, 'Business profile not found');
+
+        $invoices = Invoice::query()
+            ->where('business_id', $business->id)
+            ->latest()
             ->get();
-        $templates = MessageTemplates::query()->where('business_id', $business->id)->get();
 
-        return view('dashboard.schedule-reminders.create', ['invoices' => $invoices, 'rules' => $rules, 'templates' => $templates]);
-    }
+        $rules = ReminderRule::query()
+            ->where('user_id', $user->id)
+            ->with(['steps.templates.emailTemplate', 'steps.templates.messageTemplate'])
+            ->get();
 
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'invoice_ids' => ['required', 'array'],
-            'invoice_ids.*' => ['exists:invoices,id'], // make sure IDs exist and match type
-            'source_type' => ['required', 'in:manual,rule'],
-            'channel' => ['nullable', 'required_if:source_type,manual', 'string'],
-            'message_template_id' => ['nullable', 'required_if:source_type,manual', 'exists:message_templates,id'],
-            'reminder_rule_id' => ['nullable', 'required_if:source_type,rule', 'exists:reminder_rules,id'],
-            'scheduled_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:now'], // <- handle T
+        $emailTemplates = EmailTemplate::query()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        $messageTemplates = MessageTemplates::query()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        return view('dashboard.schedule-reminders.create', [
+            'invoices' => $invoices,
+            'rules' => $rules,
+            'emailTemplates' => $emailTemplates,
+            'messageTemplates' => $messageTemplates,
         ]);
-
-        $invoiceIds = $request->input('invoice_ids', []);
-        $sourceType = $request->source_type;
-        $bulkGroupId = Str::uuid(); // Always use a bulk group for consistency when scheduling a rule or multiple invoices
-
-        foreach ($invoiceIds as $invoiceId) {
-            $invoice = Invoice::query()->findOrFail($invoiceId);
-
-            if ($sourceType === 'manual') {
-                ReminderSchedule::query()->create([
-                    'invoice_id' => $invoiceId,
-                    'source_type' => ReminderSourceTypeEnum::MANUAL,
-                    'channel' => $request->channel,
-                    'message_template_id' => $request->message_template_id,
-                    'bulk_group_id' => count($invoiceIds) > 1 ? $bulkGroupId : null,
-                    'scheduled_at' => $request->scheduled_at,
-                    'status' => ReminderStatusEnum::PENDING,
-                ]);
-            } else {
-                $rule = ReminderRule::with('steps.templates')->findOrFail($request->reminder_rule_id);
-                $referenceDate = Date::parse($request->scheduled_at);
-
-                foreach ($rule->steps as $step) {
-                    // Calculate scheduled_at based on referenceDate and step offset
-                    $scheduledAt = $this->calculateScheduledAt($referenceDate, $step);
-
-                    foreach ($step->templates as $template) {
-                        ReminderSchedule::query()->create([
-                            'invoice_id' => $invoiceId,
-                            'source_type' => 'rule',
-                            'channel' => $template->channel,
-                            'message_template_id' => $template->message_template_id,
-                            'reminder_rule_id' => $rule->id,
-                            'reminder_rule_step_id' => $step->id,
-                            'bulk_group_id' => $bulkGroupId,
-                            'scheduled_at' => $scheduledAt,
-                            'status' => ReminderStatusEnum::PENDING,
-                        ]);
-                    }
-                }
-            }
-        }
-
-        $message = $sourceType === 'rule' ? 'Rule scheduled successfully.' : 'Reminder(s) scheduled successfully.';
-
-        return to_route('schedule-reminders.index')->with('success', $message);
     }
 
+    /**
+     * Store a newly created reminder schedule.
+     */
+    public function store(StoreReminderScheduleRequest $request): RedirectResponse
+    {
+        try {
+            $result = $this->createAction->execute($request->validated(), Auth::id());
+
+            $message = $result['source_type'] === 'rule'
+                ? 'Rule scheduled successfully.'
+                : 'Reminder(s) scheduled successfully.';
+
+            return to_route('schedule-reminders.index')->with('success', $message);
+        } catch (Exception $exception) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create reminder schedule: '.$exception->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for editing the specified reminder schedule.
+     */
     public function edit(ReminderSchedule $schedule): View
     {
-        $business = auth()->user()->business;
-        $invoices = Invoice::query()->where('business_id', $business->id)->latest()->get();
-        $rules = ReminderRule::query()->where('user_id', auth()->id())
-            ->with(['steps.templates.messageTemplate'])
+        $user = Auth::user();
+        $business = $user->business;
+
+        abort_unless($business, 404, 'Business profile not found');
+
+        // Verify schedule ownership
+        $schedule->loadMissing('invoice.business');
+        abort_unless(
+            $schedule->invoice && $schedule->invoice->business_id === $business->id,
+            403,
+            'You do not have permission to edit this reminder schedule.'
+        );
+
+        $invoices = Invoice::query()
+            ->where('business_id', $business->id)
+            ->latest()
             ->get();
-        $templates = MessageTemplates::query()->where('business_id', $business->id)->get();
 
-        // Get related invoices for bulk group (if any)
-        $relatedSchedules = ReminderSchedule::query()->where('bulk_group_id', $schedule->bulk_group_id)
+        $rules = ReminderRule::query()
+            ->where('user_id', $user->id)
+            ->with(['steps.templates.emailTemplate', 'steps.templates.messageTemplate'])
             ->get();
 
-        return view('dashboard.schedule-reminders.edit', ['schedule' => $schedule, 'invoices' => $invoices, 'rules' => $rules, 'templates' => $templates, 'relatedSchedules' => $relatedSchedules]);
-    }
+        $emailTemplates = EmailTemplate::query()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
 
-    public function update(Request $request, ReminderSchedule $schedule): RedirectResponse
-    {
-        $request->validate([
-            'invoice_ids' => ['required', 'array'],
-            'invoice_ids.*' => ['exists:invoices,id'],
-            'source_type' => ['required', 'in:manual,rule'],
-            'channel' => ['required_if:source_type,manual', 'string'],
-            'message_template_id' => ['required_if:source_type,manual', 'exists:message_templates,id'],
-            'reminder_rule_id' => ['required_if:source_type,rule', 'exists:reminder_rules,id'],
-            'scheduled_at' => ['required', 'datetime'],
+        $messageTemplates = MessageTemplates::query()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        // Get related schedules for bulk group (if any)
+        $relatedSchedules = $schedule->bulk_group_id
+            ? ReminderSchedule::query()
+                ->where('bulk_group_id', $schedule->bulk_group_id)
+                ->with('invoice')
+                ->get()
+            : collect([$schedule]);
+
+        return view('dashboard.schedule-reminders.edit', [
+            'schedule' => $schedule,
+            'invoices' => $invoices,
+            'rules' => $rules,
+            'emailTemplates' => $emailTemplates,
+            'messageTemplates' => $messageTemplates,
+            'relatedSchedules' => $relatedSchedules,
         ]);
-
-        $invoiceIds = $request->input('invoice_ids', []);
-        $sourceType = $request->source_type;
-
-        // Determine if this is a bulk group update or single update
-        $bulkGroupId = $schedule->bulk_group_id;
-
-        // Delete existing schedules in the group (or just this one)
-        if ($bulkGroupId) {
-            ReminderSchedule::query()->where('bulk_group_id', $bulkGroupId)->delete();
-        } else {
-            $schedule->delete();
-        }
-
-        // Generate a new bulk group ID for the updated set
-        $newBulkGroupId = Str::uuid();
-
-        foreach ($invoiceIds as $invoiceId) {
-            $invoice = Invoice::query()->findOrFail($invoiceId);
-
-            if ($sourceType === 'manual') {
-                ReminderSchedule::query()->create([
-                    'invoice_id' => $invoiceId,
-                    'source_type' => ReminderSourceTypeEnum::MANUAL,
-                    'channel' => $request->channel,
-                    'message_template_id' => $request->message_template_id,
-                    'bulk_group_id' => count($invoiceIds) > 1 ? $newBulkGroupId : null,
-                    'scheduled_at' => $request->scheduled_at,
-                    'status' => ReminderStatusEnum::PENDING,
-                ]);
-            } else {
-                $rule = ReminderRule::with('steps.templates')->findOrFail($request->reminder_rule_id);
-                $referenceDate = Date::parse($request->scheduled_at);
-
-                foreach ($rule->steps as $step) {
-                    $scheduledAt = $this->calculateScheduledAt($referenceDate, $step);
-
-                    foreach ($step->templates as $template) {
-                        ReminderSchedule::query()->create([
-                            'invoice_id' => $invoiceId,
-                            'source_type' => ReminderSourceTypeEnum::RULE,
-                            'channel' => $template->channel,
-                            'message_template_id' => $template->message_template_id,
-                            'reminder_rule_id' => $rule->id,
-                            'reminder_rule_step_id' => $step->id,
-                            'bulk_group_id' => $newBulkGroupId,
-                            'scheduled_at' => $scheduledAt,
-                            'status' => ReminderStatusEnum::PENDING,
-                        ]);
-                    }
-                }
-            }
-        }
-
-        $message = $sourceType === 'rule' ? 'Rule updated successfully.' : 'Reminder(s) updated successfully.';
-
-        return to_route('schedule-reminders.index')->with('success', $message);
     }
 
+    /**
+     * Update the specified reminder schedule.
+     */
+    public function update(UpdateReminderScheduleRequest $request, ReminderSchedule $schedule): RedirectResponse
+    {
+        try {
+            $result = $this->updateAction->execute($schedule, $request->validated(), Auth::id());
+
+            $message = $result['source_type'] === 'rule'
+                ? 'Rule updated successfully.'
+                : 'Reminder(s) updated successfully.';
+
+            return to_route('schedule-reminders.index')->with('success', $message);
+        } catch (Exception $exception) {
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update reminder schedule: '.$exception->getMessage());
+        }
+    }
+
+    /**
+     * Cancel the specified reminder schedule.
+     */
     public function cancel(ReminderSchedule $schedule): RedirectResponse
     {
-        if ($schedule->status !== ReminderStatusEnum::PENDING) {
-            return back()->with('error', 'Only pending reminders can be cancelled.');
-        }
+        try {
+            $cancelledCount = $this->cancelAction->execute($schedule, Auth::id());
 
-        // Cancel related schedules if bulk group exists
-        if ($schedule->bulk_group_id) {
-            ReminderSchedule::query()->where('bulk_group_id', $schedule->bulk_group_id)
-                ->where('reminder_rule_step_id', $schedule->reminder_rule_step_id)
-                ->where('message_template_id', $schedule->message_template_id)
-                ->where('channel', $schedule->channel)
-                ->update(['status' => ReminderStatusEnum::CANCELLED]);
-        } else {
-            $schedule->update(['status' => ReminderStatusEnum::CANCELLED]);
-        }
+            $message = $cancelledCount > 1
+                ? $cancelledCount.' reminder(s) cancelled successfully.'
+                : 'Reminder cancelled successfully.';
 
-        return back()->with('success', 'Reminder(s) cancelled successfully.');
+            return back()->with('success', $message);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to cancel reminder: '.$e->getMessage());
+        }
     }
 
-    public function reschedule(Request $request, ReminderSchedule $schedule): RedirectResponse
+    /**
+     * Reschedule the specified reminder schedule.
+     */
+    public function reschedule(RescheduleReminderRequest $request, ReminderSchedule $schedule): RedirectResponse
     {
-        $request->validate([
-            'scheduled_at' => ['required', 'date', 'after:now'],
-        ]);
+        try {
+            $rescheduledCount = $this->rescheduleAction->execute(
+                $schedule,
+                Date::parse($request->validated()['scheduled_at']),
+                Auth::id()
+            );
 
-        if ($schedule->status !== ReminderStatusEnum::PENDING) {
-            return back()->with('error', 'Only pending reminders can be rescheduled.');
+            $message = $rescheduledCount > 1
+                ? $rescheduledCount.' reminder(s) rescheduled successfully.'
+                : 'Reminder rescheduled successfully.';
+
+            return back()->with('success', $message);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to reschedule reminder: '.$e->getMessage());
         }
-
-        $scheduledAt = $request->scheduled_at;
-
-        // Reschedule related schedules if bulk group exists
-        if ($schedule->bulk_group_id) {
-            ReminderSchedule::query()->where('bulk_group_id', $schedule->bulk_group_id)
-                ->where('reminder_rule_step_id', $schedule->reminder_rule_step_id)
-                ->where('message_template_id', $schedule->message_template_id)
-                ->where('channel', $schedule->channel)
-                ->update(['scheduled_at' => $scheduledAt]);
-        } else {
-            $schedule->update(['scheduled_at' => $scheduledAt]);
-        }
-
-        return back()->with('success', 'Reminder(s) rescheduled successfully.');
-    }
-
-    private function calculateScheduledAt(Carbon $referenceDate, $step)
-    {
-        $date = clone $referenceDate;
-        $offset = (int) $step->offset_days;
-
-        if ($step->reminder_type === 'before_due') {
-            $date->subDays($offset);
-        } elseif ($step->reminder_type === 'after_due') {
-            $date->addDays($offset);
-        }
-
-        // 'on_due' doesn't need offset adjustment
-
-        // Set a default time (e.g., 09:00 AM) or use current time if it's today
-        $date->setTime(9, 0, 0);
-
-        return $date;
     }
 }

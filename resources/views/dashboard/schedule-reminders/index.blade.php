@@ -17,6 +17,21 @@
         </div>
         <!-- Page Header Close -->
 
+        <!-- Alert Messages -->
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="ri-check-line me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="row">
             <div class="col-xl-12">
                 <div class="card custom-card">
@@ -25,9 +40,20 @@
                             Manage Scheduled Reminders
                         </div>
                         <div class="d-flex">
-                            <a href="{{ route('schedule-reminders.create') }}" class="btn btn-primary btn-sm me-2">
-                                <i class="ri-add-line me-1"></i> Schedule Reminder
-                            </a>
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-primary btn-sm dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="ri-add-line me-1"></i> Schedule Reminder
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('rule-scheduled.create') }}">
+                                            <i class="ri-settings-3-line me-2"></i> Schedule Rule-Based
+                                        </a></li>
+                                    <li><a class="dropdown-item" href="{{ route('manual-scheduled.create') }}">
+                                            <i class="ri-edit-line me-2"></i> Schedule Manual
+                                        </a></li>
+                                </ul>
+                            </div>
                             <form action="{{ route('schedule-reminders.index') }}" method="GET" class="d-flex">
                                 <select name="status" class="form-select form-select-sm me-2"
                                     onchange="this.form.submit()">
@@ -50,7 +76,7 @@
                                         <th scope="col">Invoice</th>
                                         <th scope="col">Client</th>
                                         <th scope="col">Rule / Step</th>
-                                        <th scope="col">Channel</th>
+                                        <th scope="col">Channel / Template</th>
                                         <th scope="col">Scheduled At</th>
                                         <th scope="col">Status</th>
                                         <th scope="col">Action</th>
@@ -105,13 +131,46 @@
                                             </td>
                                             <td>
                                                 @php
-                                                    $isEmail = $schedule->channel->value === 'email';
+                                                    $channel = $schedule->channel->value;
+                                                    $isEmail = $channel === 'email';
+                                                    $isWhatsApp = $channel === 'whatsapp';
+                                                    $isSMS = $channel === 'sms';
+
+                                                    $badgeClass = match ($channel) {
+                                                        'email' => 'bg-primary',
+                                                        'whatsapp' => 'bg-success',
+                                                        'sms' => 'bg-info',
+                                                        default => 'bg-secondary',
+                                                    };
+
+                                                    $icon = match ($channel) {
+                                                        'email' => 'ri-mail-line',
+                                                        'whatsapp' => 'ri-whatsapp-line',
+                                                        'sms' => 'ri-message-2-line',
+                                                        default => 'ri-question-line',
+                                                    };
+
+                                                    // Get template name
+                                                    $templateName = null;
+                                                    if ($isEmail && $schedule->emailTemplate) {
+                                                        $templateName = $schedule->emailTemplate->name;
+                                                    } elseif (($isWhatsApp || $isSMS) && $schedule->messageTemplate) {
+                                                        $templateName = $schedule->messageTemplate->name;
+                                                    }
                                                 @endphp
 
-                                                <span class="badge {{ $isEmail ? 'bg-primary' : 'bg-success' }}">
-                                                    <i class="ri-{{ $isEmail ? 'mail-line' : 'whatsapp-line' }} me-1"></i>
-                                                    {{ ucfirst($schedule->channel->value) }}
-                                                </span>
+                                                <div class="d-flex flex-column align-items-start">
+                                                    <span class="badge {{ $badgeClass }}">
+                                                        <i class="{{ $icon }} me-1"></i>
+                                                        {{ ucfirst($channel) }}
+                                                    </span>
+                                                    @if ($templateName)
+                                                        <small class="text-muted mt-1" style="font-size: 11px;">
+                                                            <i class="ri-file-list-line"></i>
+                                                            {{ Str::limit($templateName, 25) }}
+                                                        </small>
+                                                    @endif
+                                                </div>
                                             </td>
 
                                             <td>
@@ -135,10 +194,17 @@
                                             <td>
                                                 @if ($schedule->status->value === 'pending')
                                                     <div class="btn-list">
-                                                        <a href="{{ route('schedule-reminders.edit', $schedule) }}"
-                                                            class="btn btn-primary-light btn-icon btn-sm">
-                                                            <i class="ri-pencil-line"></i>
-                                                        </a>
+                                                        @if ($schedule->source_type->value === 'rule')
+                                                            <a href="{{ route('rule-scheduled.edit', $schedule) }}"
+                                                                class="btn btn-primary-light btn-icon btn-sm">
+                                                                <i class="ri-pencil-line"></i>
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('manual-scheduled.edit', $schedule) }}"
+                                                                class="btn btn-primary-light btn-icon btn-sm">
+                                                                <i class="ri-pencil-line"></i>
+                                                            </a>
+                                                        @endif
                                                         <button type="button" class="btn btn-info-light btn-icon btn-sm"
                                                             data-bs-toggle="modal" data-bs-target="#rescheduleModal"
                                                             data-id="{{ $schedule->id }}"
@@ -191,6 +257,11 @@
                             <label for="scheduled_at" class="form-label">New Scheduled Date & Time</label>
                             <input type="datetime-local" class="form-control" id="scheduled_at" name="scheduled_at"
                                 required>
+                            <small class="text-muted d-block mt-1">⏰ Select a future date and time for the
+                                reminder.</small>
+                            @error('scheduled_at')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -207,15 +278,40 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const rescheduleModal = document.getElementById('rescheduleModal');
+            const rescheduleForm = document.getElementById('reschedule-form');
+            const scheduledAtInput = document.getElementById('scheduled_at');
+
             if (rescheduleModal) {
                 rescheduleModal.addEventListener('show.bs.modal', function(event) {
                     const button = event.relatedTarget;
                     const id = button.getAttribute('data-id');
                     const date = button.getAttribute('data-date');
 
-                    const form = document.getElementById('reschedule-form');
-                    form.action = `/schedule-reminders/${id}/reschedule`;
-                    document.getElementById('scheduled_at').value = date;
+                    rescheduleForm.action = `/schedule-reminders/${id}/reschedule`;
+                    scheduledAtInput.value = date;
+                });
+            }
+
+            // Validate reschedule form
+            if (rescheduleForm) {
+                rescheduleForm.addEventListener('submit', function(e) {
+                    if (!scheduledAtInput.value) {
+                        e.preventDefault();
+                        alert('Please select a new scheduled date and time');
+                        return false;
+                    }
+
+                    // Validate that scheduled date is in the future
+                    const scheduledDate = new Date(scheduledAtInput.value);
+                    const now = new Date();
+                    if (scheduledDate <= now) {
+                        e.preventDefault();
+                        alert(
+                            'The scheduled date must be in the future. Please select a future date and time.'
+                        );
+                        scheduledAtInput.focus();
+                        return false;
+                    }
                 });
             }
         });

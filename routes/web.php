@@ -8,9 +8,12 @@ use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LogController;
+use App\Http\Controllers\ManualScheduledController;
 use App\Http\Controllers\MessageTemplateController;
 use App\Http\Controllers\ReminderRuleController;
 use App\Http\Controllers\ReminderScheduleController;
+use App\Http\Controllers\RuleScheduledController;
 use App\Http\Controllers\SendInvoiceMessageController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionInvoiceController;
@@ -38,11 +41,19 @@ Route::middleware(['auth'])->group(function (): void {
         'reminder-rules' => 'rule',
     ]);
 
-    // Schedule Reminders
+    // Schedule Reminders - All Scheduled (index only, for viewing all)
     Route::post('schedule-reminders/{schedule}/cancel', [ReminderScheduleController::class, 'cancel'])->name('schedule-reminders.cancel');
     Route::post('schedule-reminders/{schedule}/reschedule', [ReminderScheduleController::class, 'reschedule'])->name('schedule-reminders.reschedule');
-    Route::resource('schedule-reminders', ReminderScheduleController::class)->except(['destroy'])->parameters([
-        'schedule-reminders' => 'schedule',
+    Route::get('schedule-reminders', [ReminderScheduleController::class, 'index'])->name('schedule-reminders.index');
+
+    // Rule-Based Scheduled Reminders
+    Route::resource('rule-scheduled', RuleScheduledController::class)->only(['create', 'store', 'edit', 'update'])->parameters([
+        'rule-scheduled' => 'schedule',
+    ]);
+
+    // Manual Scheduled Reminders
+    Route::resource('manual-scheduled', ManualScheduledController::class)->only(['create', 'store', 'edit', 'update'])->parameters([
+        'manual-scheduled' => 'schedule',
     ]);
 
     // Route::get('email/templates', [EmailTemplateController::class, 'indexView'])->name('email.templates.index');
@@ -85,6 +96,9 @@ Route::middleware(['auth'])->group(function (): void {
         Route::get('invoices/{invoice}', [SubscriptionInvoiceController::class, 'show'])->name('invoices.show');
         Route::get('invoices/{invoice}/download', [SubscriptionInvoiceController::class, 'download'])->name('invoices.download');
     });
+
+    // ================= LOGS ROUTES =================
+    Route::get('logs', [LogController::class, 'index'])->name('logs.index');
 
     // ================= ADMIN ROUTES =================
     Route::prefix('admin')->name('admin.')->group(function (): void {
