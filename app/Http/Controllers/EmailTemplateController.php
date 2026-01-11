@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Services\TemplateVariableService;
 use App\Http\Requests\CreateEmailTemplateRequest;
 use App\Http\Requests\DeleteEmailTemplateRequest;
 use App\Http\Requests\UpdateEmailTemplateRequest;
@@ -422,5 +423,19 @@ final class EmailTemplateController extends Controller
     public function indexView(): Factory|View
     {
         return view('dashboard.email-templates.index');
+    }
+
+    /**
+     * Get available template variables for the React email template system.
+     */
+    public function getAvailableVariables(Request $request): JsonResponse
+    {
+        $variableService = app(TemplateVariableService::class);
+        $availableVariables = $variableService->getAvailableVariables();
+
+        return response()->json([
+            'success' => true,
+            'data' => $availableVariables,
+        ]);
     }
 }

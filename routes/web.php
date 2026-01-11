@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function (): void {
     // Email Template API Routes
     Route::prefix('api/email-templates')->name('api.email-templates.')->group(function (): void {
         Route::get('/', [EmailTemplateController::class, 'index'])->name('index');
+        Route::get('available-variables', [EmailTemplateController::class, 'getAvailableVariables'])->name('available-variables');
         Route::post('/', [EmailTemplateController::class, 'store'])->name('store');
         Route::get('{email_template}', [EmailTemplateController::class, 'show'])->name('show');
         Route::patch('{email_template}', [EmailTemplateController::class, 'update'])->name('update');

@@ -34,7 +34,7 @@ final class StoreManualScheduledRequest extends FormRequest
             'invoice_ids.*' => [
                 'required',
                 'uuid',
-                Rule::exists('invoices', 'id')->where(fn($query) => $query->where('business_id', $businessId)),
+                Rule::exists('invoices', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
             ],
             'channel' => ['required', 'in:email,whatsapp,sms'],
             'scheduled_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:now'],

@@ -203,9 +203,6 @@
                             <a href="javascript:void(0);" class="side-menu__item">WhatsApp Integration</a>
                         </li>
                         <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">Twilio Integration</a>
-                        </li>
-                        <li class="slide">
                             <a href="{{ route('logs.index') }}" class="side-menu__item">Logs</a>
                         </li>
                     </ul>

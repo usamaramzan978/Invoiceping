@@ -34,7 +34,7 @@ final class UpdateReminderScheduleRequest extends FormRequest
             'invoice_ids.*' => [
                 'required',
                 'uuid',
-                Rule::exists('invoices', 'id')->where(fn($query) => $query->where('business_id', $businessId)),
+                Rule::exists('invoices', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
             ],
             'source_type' => ['required', 'in:manual,rule'],
             'scheduled_at' => ['required', 'date_format:Y-m-d\TH:i', 'after:now'],
@@ -47,13 +47,13 @@ final class UpdateReminderScheduleRequest extends FormRequest
             ],
             'email_template_id' => [
                 'nullable',
-                Rule::requiredIf(fn(): bool => $this->input('source_type') === 'manual' && $this->input('channel') === 'email'),
+                Rule::requiredIf(fn (): bool => $this->input('source_type') === 'manual' && $this->input('channel') === 'email'),
                 'integer',
                 Rule::exists('email_templates', 'id')->where('user_id', $userId)->where('is_active', true),
             ],
             'message_template_id' => [
                 'nullable',
-                Rule::requiredIf(fn(): bool => $this->input('source_type') === 'manual'
+                Rule::requiredIf(fn (): bool => $this->input('source_type') === 'manual'
                     && in_array($this->input('channel'), ['whatsapp', 'sms'])),
                 'uuid',
                 Rule::exists('message_templates', 'id')->where('user_id', $userId)->where('is_active', true),

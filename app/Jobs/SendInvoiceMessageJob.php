@@ -22,9 +22,9 @@ final class SendInvoiceMessageJob implements ShouldQueue
 {
     use Queueable;
 
-    public $tries = 3;
+    public int $tries = 1;
 
-    public $timeout = 30;
+    public int $timeout = 30;
 
     /**
      * Create a new job instance.
@@ -59,7 +59,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 'email' => $this->sendEmail($logService, $invoice),
                 'whatsapp' => $this->sendWhatsApp($logService, $invoice),
                 'sms' => $this->sendSMS($logService, $invoice),
-                default => Log::warning('Unknown channel: '.$this->channel),
+                default => Log::warning('Unknown channel: ' . $this->channel),
             };
         } catch (Exception $exception) {
             // Log error to database
@@ -91,7 +91,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
         $logService->logMessageFailed(
             $this->channel,
             $this->recipient,
-            'Job failed after '.$this->tries.' retries: '.$exception->getMessage(),
+            'Job failed after ' . $this->tries . ' retries: ' . $exception->getMessage(),
             $invoice,
             ['exception' => $exception->getMessage(), 'retries' => $this->tries],
             $this->userId
@@ -312,7 +312,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
         // Add country code if not present (customize based on your needs)
         if (! str_starts_with((string) $cleaned, '92')) {
             // 92 is Pakistan code - adjust for your default country
-            return '92'.mb_ltrim((string) $cleaned, '0');
+            return '92' . mb_ltrim((string) $cleaned, '0');
         }
 
         return $cleaned;

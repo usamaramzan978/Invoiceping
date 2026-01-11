@@ -34,7 +34,7 @@ final class UpdateRuleScheduledRequest extends FormRequest
             'invoice_ids.*' => [
                 'required',
                 'uuid',
-                Rule::exists('invoices', 'id')->where(fn($query) => $query->where('business_id', $businessId)),
+                Rule::exists('invoices', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
             ],
             'reminder_rule_id' => [
                 'required',
