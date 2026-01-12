@@ -21,6 +21,20 @@ enum WhatsAppProviderType: string
     }
 
     /**
+     * Get all provider types with labels.
+     *
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        return array_reduce(
+            self::cases(),
+            fn (array $carry, self $case): array => $carry + [$case->value => $case->label()],
+            []
+        );
+    }
+
+    /**
      * Get human-readable label for the provider type.
      */
     public function label(): string
@@ -31,19 +45,4 @@ enum WhatsAppProviderType: string
             self::VONAGE => 'Vonage',
         };
     }
-
-    /**
-     * Get all provider types with labels.
-     *
-     * @return array<string, string>
-     */
-    public static function options(): array
-    {
-        return array_reduce(
-            self::cases(),
-            fn (array $carry, self $case) => $carry + [$case->value => $case->label()],
-            []
-        );
-    }
 }
-

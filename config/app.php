@@ -17,6 +17,10 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'whatsapp_salt' => env('WHATSAPP_SALT', 'whatsapp_salt'),
+    'admin_email' => env('ADMIN_EMAIL', 'admin@example.com'),
+    'security_log_retention_days' => env('SECURITY_LOG_RETENTION_DAYS', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

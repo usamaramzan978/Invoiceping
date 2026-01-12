@@ -34,11 +34,11 @@
                         <!-- Provider Type -->
                         <div class="col-md-6">
                             <label class="form-label">Provider Type <span class="text-danger">*</span></label>
-                            <select name="type" id="providerType" class="form-control" required>
+                            <select name="type" id="providerType" class="form-control single-select2" required>
                                 <option value="">Select Provider Type</option>
                                 @foreach ($typeOptions as $value => $label)
-                                    <option value="{{ $value }}"
-                                        {{ old('type') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    <option value="{{ $value }}" {{ old('type') == $value ? 'selected' : '' }}>
+                                        {{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('type')
@@ -79,8 +79,7 @@
                         <!-- Notes -->
                         <div class="col-12">
                             <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="3"
-                                placeholder="Optional notes about this provider">{{ old('notes') }}</textarea>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes about this provider">{{ old('notes') }}</textarea>
                             @error('notes')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -97,146 +96,160 @@
     </div>
 
     <script>
-        // Provider type credentials mapping
-        const credentialsMap = {
-            whatsapp_cloud_api: {
-                'access_token': {
-                    label: 'Access Token',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your WhatsApp Cloud API access token'
+        document.addEventListener('DOMContentLoaded', function() {
+            // Provider type credentials mapping
+            const credentialsMap = {
+                whatsapp_cloud_api: {
+                    'access_token': {
+                        label: 'Access Token',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your WhatsApp Cloud API access token'
+                    },
+                    'phone_number_id': {
+                        label: 'Phone Number ID',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your phone number ID'
+                    },
+                    'business_account_id': {
+                        label: 'Business Account ID',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your business account ID'
+                    },
+                    'app_id': {
+                        label: 'App ID',
+                        type: 'text',
+                        required: false,
+                        placeholder: 'Enter your app ID (optional)'
+                    },
+                    'app_secret': {
+                        label: 'App Secret',
+                        type: 'text',
+                        required: false,
+                        placeholder: 'Enter your app secret (optional)'
+                    }
                 },
-                'phone_number_id': {
-                    label: 'Phone Number ID',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your phone number ID'
+                twilio: {
+                    'account_sid': {
+                        label: 'Account SID',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your Twilio account SID'
+                    },
+                    'auth_token': {
+                        label: 'Auth Token',
+                        type: 'password',
+                        required: true,
+                        placeholder: 'Enter your Twilio auth token'
+                    },
+                    'from_phone_number': {
+                        label: 'From Phone Number',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your Twilio phone number'
+                    },
+                    'whatsapp_sandbox_number': {
+                        label: 'WhatsApp Sandbox Number',
+                        type: 'text',
+                        required: false,
+                        placeholder: 'Enter WhatsApp sandbox number (optional)'
+                    }
                 },
-                'business_account_id': {
-                    label: 'Business Account ID',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your business account ID'
-                },
-                'app_id': {
-                    label: 'App ID',
-                    type: 'text',
-                    required: false,
-                    placeholder: 'Enter your app ID (optional)'
-                },
-                'app_secret': {
-                    label: 'App Secret',
-                    type: 'text',
-                    required: false,
-                    placeholder: 'Enter your app secret (optional)'
+                vonage: {
+                    'api_key': {
+                        label: 'API Key',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your Vonage API key'
+                    },
+                    'api_secret': {
+                        label: 'API Secret',
+                        type: 'password',
+                        required: true,
+                        placeholder: 'Enter your Vonage API secret'
+                    },
+                    'from_number': {
+                        label: 'From Number',
+                        type: 'text',
+                        required: true,
+                        placeholder: 'Enter your Vonage phone number'
+                    },
+                    'application_id': {
+                        label: 'Application ID',
+                        type: 'text',
+                        required: false,
+                        placeholder: 'Enter your application ID (optional)'
+                    }
                 }
-            },
-            twilio: {
-                'account_sid': {
-                    label: 'Account SID',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your Twilio account SID'
-                },
-                'auth_token': {
-                    label: 'Auth Token',
-                    type: 'password',
-                    required: true,
-                    placeholder: 'Enter your Twilio auth token'
-                },
-                'from_phone_number': {
-                    label: 'From Phone Number',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your Twilio phone number'
-                },
-                'whatsapp_sandbox_number': {
-                    label: 'WhatsApp Sandbox Number',
-                    type: 'text',
-                    required: false,
-                    placeholder: 'Enter WhatsApp sandbox number (optional)'
-                }
-            },
-            vonage: {
-                'api_key': {
-                    label: 'API Key',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your Vonage API key'
-                },
-                'api_secret': {
-                    label: 'API Secret',
-                    type: 'password',
-                    required: true,
-                    placeholder: 'Enter your Vonage API secret'
-                },
-                'from_number': {
-                    label: 'From Number',
-                    type: 'text',
-                    required: true,
-                    placeholder: 'Enter your Vonage phone number'
-                },
-                'application_id': {
-                    label: 'Application ID',
-                    type: 'text',
-                    required: false,
-                    placeholder: 'Enter your application ID (optional)'
+            };
+
+            // Function to update credentials fields based on provider type
+            function updateCredentialsFields(type) {
+                const credentialsSection = document.getElementById('credentialsSection');
+                const credentialsFields = document.getElementById('credentialsFields');
+
+                if (type && credentialsMap[type]) {
+                    credentialsSection.style.display = 'block';
+                    credentialsFields.innerHTML = '';
+
+                    Object.entries(credentialsMap[type]).forEach(([name, config]) => {
+                        const fieldDiv = document.createElement('div');
+                        fieldDiv.className = 'col-md-6';
+
+                        const label = document.createElement('label');
+                        label.className = 'form-label';
+                        label.textContent = config.label;
+                        if (config.required) {
+                            const span = document.createElement('span');
+                            span.className = 'text-danger';
+                            span.textContent = ' *';
+                            label.appendChild(span);
+                        }
+
+                        const input = document.createElement('input');
+                        input.type = config.type;
+                        input.name = name;
+                        input.className = 'form-control';
+                        input.placeholder = config.placeholder;
+                        if (config.required) {
+                            input.required = true;
+                        }
+
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'text-danger small';
+                        errorDiv.id = 'error-' + name.replace(/[\[\]]/g, '-');
+
+                        fieldDiv.appendChild(label);
+                        fieldDiv.appendChild(input);
+                        fieldDiv.appendChild(errorDiv);
+                        credentialsFields.appendChild(fieldDiv);
+                    });
+                } else {
+                    credentialsSection.style.display = 'none';
+                    credentialsFields.innerHTML = '';
                 }
             }
-        };
 
-        // Handle provider type change
-        document.getElementById('providerType').addEventListener('change', function() {
-            const type = this.value;
-            const credentialsSection = document.getElementById('credentialsSection');
-            const credentialsFields = document.getElementById('credentialsFields');
+            // Initialize Select2
+            $('#providerType').select2({
+                placeholder: "Select Provider Type",
+                allowClear: false,
+                width: '100%'
+            });
 
-            if (type && credentialsMap[type]) {
-                credentialsSection.style.display = 'block';
-                credentialsFields.innerHTML = '';
+            // Handle provider type change using Select2 events
+            $('#providerType').on('select2:select select2:clear change', function() {
+                const type = $(this).val();
+                updateCredentialsFields(type);
+            });
 
-                Object.entries(credentialsMap[type]).forEach(([name, config]) => {
-                    const fieldDiv = document.createElement('div');
-                    fieldDiv.className = 'col-md-6';
-
-                    const label = document.createElement('label');
-                    label.className = 'form-label';
-                    label.textContent = config.label;
-                    if (config.required) {
-                        const span = document.createElement('span');
-                        span.className = 'text-danger';
-                        span.textContent = ' *';
-                        label.appendChild(span);
-                    }
-
-                    const input = document.createElement('input');
-                    input.type = config.type;
-                    input.name = name;
-                    input.className = 'form-control';
-                    input.placeholder = config.placeholder;
-                    if (config.required) {
-                        input.required = true;
-                    }
-
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'text-danger small';
-                    errorDiv.id = 'error-' + name.replace(/[\[\]]/g, '-');
-
-                    fieldDiv.appendChild(label);
-                    fieldDiv.appendChild(input);
-                    fieldDiv.appendChild(errorDiv);
-                    credentialsFields.appendChild(fieldDiv);
-                });
-            } else {
-                credentialsSection.style.display = 'none';
-                credentialsFields.innerHTML = '';
-            }
+            // Trigger change on page load if type is already selected
+            @if (old('type'))
+                const oldType = '{{ old('type') }}';
+                $('#providerType').val(oldType).trigger('change');
+            @endif
         });
-
-        // Trigger change on page load if type is already selected
-        @if (old('type'))
-            document.getElementById('providerType').dispatchEvent(new Event('change'));
-        @endif
     </script>
 @endsection
-

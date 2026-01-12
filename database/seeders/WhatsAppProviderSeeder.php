@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Enums\WhatsAppProviderType;
 use App\Models\User;
 use App\Models\WhatsAppProvider;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class WhatsAppProviderSeeder extends Seeder
+final class WhatsAppProviderSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -16,10 +17,10 @@ class WhatsAppProviderSeeder extends Seeder
     public function run(): void
     {
         // Get or create a demo user
-        $user = User::first();
+        $user = User::query()->first();
 
         // WhatsApp Cloud API Provider
-        WhatsAppProvider::create([
+        WhatsAppProvider::query()->create([
             'user_id' => $user->id,
             'name' => 'WhatsApp Cloud API - Production',
             'type' => WhatsAppProviderType::WHATSAPP_CLOUD_API->value,
@@ -34,7 +35,7 @@ class WhatsAppProviderSeeder extends Seeder
         ]);
 
         // WhatsApp Cloud API Provider (Staging)
-        WhatsAppProvider::create([
+        WhatsAppProvider::query()->create([
             'user_id' => $user->id,
             'name' => 'WhatsApp Cloud API - Staging',
             'type' => WhatsAppProviderType::WHATSAPP_CLOUD_API->value,
@@ -49,7 +50,7 @@ class WhatsAppProviderSeeder extends Seeder
         ]);
 
         // Twilio Provider
-        WhatsAppProvider::create([
+        WhatsAppProvider::query()->create([
             'user_id' => $user->id,
             'name' => 'Twilio WhatsApp',
             'type' => WhatsAppProviderType::TWILIO->value,
@@ -63,7 +64,7 @@ class WhatsAppProviderSeeder extends Seeder
         ]);
 
         // Vonage Provider
-        WhatsAppProvider::create([
+        WhatsAppProvider::query()->create([
             'user_id' => $user->id,
             'name' => 'Vonage WhatsApp',
             'type' => WhatsAppProviderType::VONAGE->value,

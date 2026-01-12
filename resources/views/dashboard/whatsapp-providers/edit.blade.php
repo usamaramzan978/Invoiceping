@@ -36,8 +36,7 @@
                         <!-- Provider Type (read-only) -->
                         <div class="col-md-6">
                             <label class="form-label">Provider Type</label>
-                            <input type="text" class="form-control" value="{{ $provider->type->label() }}"
-                                readonly>
+                            <input type="text" class="form-control" value="{{ $provider->type->label() }}" readonly>
                             <input type="hidden" name="type" value="{{ $provider->type->value }}">
                             <small class="text-muted">Provider type cannot be changed after creation.</small>
                         </div>
@@ -56,8 +55,7 @@
                                                 @endif
                                             </label>
                                             <input type="{{ $config['type'] }}" name="{{ $key }}"
-                                                class="form-control"
-                                                value="{{ old($key, $provider->$key ?? '') }}"
+                                                class="form-control" value="{{ old($key, $provider->$key ?? '') }}"
                                                 placeholder="Enter {{ strtolower($config['label']) }}"
                                                 {{ $config['required'] ? 'required' : '' }}>
                                             @error($key)
@@ -92,8 +90,7 @@
                         <!-- Notes -->
                         <div class="col-12">
                             <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control" rows="3"
-                                placeholder="Optional notes about this provider">{{ old('notes', $provider->notes) }}</textarea>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes about this provider">{{ old('notes', $provider->notes) }}</textarea>
                             @error('notes')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -109,4 +106,3 @@
         </div>
     </div>
 @endsection
-

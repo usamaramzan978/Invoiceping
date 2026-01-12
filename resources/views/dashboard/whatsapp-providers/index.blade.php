@@ -4,7 +4,10 @@
     <div class="container-fluid">
         <!-- Page Header -->
         <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <h1 class="page-title fw-semibold fs-18 mb-0">WhatsApp Providers</h1>
+            <div>
+                <h5 class="fw-semibold mb-1">WhatsApp Providers</h5>
+                <p class="text-muted mb-0">Manage your WhatsApp API providers (Cloud API, Twilio, Vonage).</p>
+            </div>
             <div class="ms-md-1 ms-0">
                 <nav>
                     <ol class="breadcrumb mb-0">
@@ -32,11 +35,7 @@
             </div>
         @endif
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h5 class="fw-semibold mb-1">WhatsApp Providers</h5>
-                <p class="text-muted mb-0">Manage your WhatsApp API providers (Cloud API, Twilio, Vonage).</p>
-            </div>
+        <div class="d-flex justify-content-end align-items-center mb-4">
             <a href="{{ route('whatsapp-providers.create') }}" class="btn btn-primary">
                 <i class="ri-add-line me-1"></i>Add Provider
             </a>

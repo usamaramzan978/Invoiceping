@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Support\Facades\Log;
 use App\Enums\WhatsAppProviderType;
+use App\Services\SecureTokenService;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +22,7 @@ final class WhatsAppProvider extends Model
         'user_id',
         'name',
         'type',
+        'last_used_at',
         // WhatsApp Cloud API credentials
         'access_token',
         'phone_number_id',
@@ -57,15 +61,6 @@ final class WhatsAppProvider extends Model
         'auth_token',
         'api_secret',
     ];
-
-
-    /**
-     * Get the user that owns the provider.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 
     /**
      * Get provider type options.
@@ -110,5 +105,172 @@ final class WhatsAppProvider extends Model
                 'application_id' => ['label' => 'Application ID', 'required' => false, 'type' => 'text'],
             ],
         };
+    }
+
+    /**
+     * Accessor for access_token - automatically decrypts
+     */
+    protected function getAccessTokenAttribute(?string $value): ?string
+    {
+        return $this->decryptValue($value);
+    }
+
+    /**
+     * Mutator for access_token - automatically encrypts
+     */
+    protected function setAccessTokenAttribute(?string $value): void
+    {
+        $this->attributes['access_token'] = $this->encryptValue($value);
+    }
+
+    /**
+     * Accessor for app_secret - automatically decrypts
+     */
+    protected function getAppSecretAttribute(?string $value): ?string
+    {
+        return $this->decryptValue($value);
+    }
+
+    /**
+     * Mutator for app_secret - automatically encrypts
+     */
+    protected function setAppSecretAttribute(?string $value): void
+    {
+        $this->attributes['app_secret'] = $this->encryptValue($value);
+    }
+
+    /**
+     * Accessor for auth_token - automatically decrypts
+     */
+    protected function getAuthTokenAttribute(?string $value): ?string
+    {
+        return $this->decryptValue($value);
+    }
+
+    /**
+     * Mutator for auth_token - automatically encrypts
+     */
+    protected function setAuthTokenAttribute(?string $value): void
+    {
+        $this->attributes['auth_token'] = $this->encryptValue($value);
+    }
+
+    /**
+     * Accessor for api_secret - automatically decrypts
+     */
+    protected function getApiSecretAttribute(?string $value): ?string
+    {
+        return $this->decryptValue($value);
+    }
+
+    /**
+     * Mutator for api_secret - automatically encrypts
+     */
+    protected function setApiSecretAttribute(?string $value): void
+    {
+        $this->attributes['api_secret'] = $this->encryptValue($value);
+    }
+
+    /**
+     * Get the user that owns the provider.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Encrypt a value using SecureTokenService
+     */
+    private function encryptValue(?string $value): ?string
+    {
+        if (in_array($value, [null, '', '0'], true)) {
+            return null;
+        }
+
+        // Check if value is already encrypted (encrypted tokens are long base64 strings)
+        // Encrypted values are typically 100+ characters
+        if (mb_strlen($value) > 100 && preg_match('/^[A-Za-z0-9+\/]+={0,2}$/', $value)) {
+            // Likely already encrypted, return as is
+            return $value;
+        }
+
+        try {
+            $service = new SecureTokenService();
+
+            // Get user - try relation first, then query if needed
+            $user = $this->relationLoaded('user') ? $this->user : null;
+            if (! $user && $this->user_id) {
+                $user = User::query()->find($this->user_id);
+            }
+
+            if (! $user) {
+                throw new Exception('User not found for encryption. User ID: '.($this->user_id ?? 'null'));
+            }
+
+            $encrypted = $service->encryptToken(
+                $value,
+                (string) $user->id, // User ID (UUID)
+                $user->email,
+                (string) $user->id  // User UUID (same as ID since using HasUuids)
+            );
+
+            return $encrypted['encrypted_token'];
+        } catch (Exception $exception) {
+            Log::error('Failed to encrypt value: '.$exception->getMessage(), [
+                'user_id' => $this->user_id,
+                'field' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? 'unknown',
+            ]);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Decrypt a value using SecureTokenService
+     */
+    private function decryptValue(?string $encryptedValue): ?string
+    {
+        if (in_array($encryptedValue, [null, '', '0'], true)) {
+            return null;
+        }
+
+        // If value is too short, it's probably not encrypted
+        if (mb_strlen($encryptedValue) < 50) {
+            return $encryptedValue;
+        }
+
+        try {
+            $service = new SecureTokenService();
+
+            // Get user - try relation first, then query if needed
+            $user = $this->relationLoaded('user') ? $this->user : null;
+            if (! $user && $this->user_id) {
+                $user = User::query()->find($this->user_id);
+            }
+
+            if (! $user) {
+                Log::warning('User not found for decryption', [
+                    'user_id' => $this->user_id,
+                ]);
+
+                return null;
+            }
+
+            $decrypted = $service->decryptToken(
+                $encryptedValue,
+                (string) $user->id, // User ID (UUID)
+                $user->email,
+                (string) $user->id  // User UUID (same as ID since using HasUuids)
+            );
+
+            return $decrypted['token'];
+        } catch (Exception $exception) {
+            Log::error('Failed to decrypt value: '.$exception->getMessage(), [
+                'user_id' => $this->user_id,
+            ]);
+
+            // Return null instead of throwing to prevent breaking the app
+            return null;
+        }
     }
 }

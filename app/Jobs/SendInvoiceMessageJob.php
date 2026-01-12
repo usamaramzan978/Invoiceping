@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Mail\InvoiceEmail;
 use App\Models\Invoice;
 use App\Services\LogService;
+use App\Services\WhatsAppService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -59,7 +60,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 'email' => $this->sendEmail($logService, $invoice),
                 'whatsapp' => $this->sendWhatsApp($logService, $invoice),
                 'sms' => $this->sendSMS($logService, $invoice),
-                default => Log::warning('Unknown channel: ' . $this->channel),
+                default => Log::warning('Unknown channel: '.$this->channel),
             };
         } catch (Exception $exception) {
             // Log error to database
@@ -91,7 +92,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
         $logService->logMessageFailed(
             $this->channel,
             $this->recipient,
-            'Job failed after ' . $this->tries . ' retries: ' . $exception->getMessage(),
+            'Job failed after '.$this->tries.' retries: '.$exception->getMessage(),
             $invoice,
             ['exception' => $exception->getMessage(), 'retries' => $this->tries],
             $this->userId
@@ -177,7 +178,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
     }
 
     /**
-     * Send WhatsApp message.
+     * Send WhatsApp message using WhatsAppService.
      */
     private function sendWhatsApp(LogService $logService, ?Invoice $invoice): void
     {
@@ -195,43 +196,56 @@ final class SendInvoiceMessageJob implements ShouldQueue
             return;
         }
 
+        $provider = 'unknown';
+
         try {
-            $formattedPhone = $this->formatPhoneNumber($this->recipient);
+            $whatsappService = app(WhatsAppService::class);
+            $result = $whatsappService->send($this->userId, $this->recipient, $this->content);
 
-            // TODO: Integrate with your WhatsApp API service
-            // Example: WhatsAppService::send($formattedPhone, $this->content);
+            $provider = $result['provider'] ?? 'unknown';
 
-            // Log successful send
-            $logService->logMessageSent(
-                'whatsapp',
-                $formattedPhone,
-                $this->content,
-                null,
-                $invoice,
-                [
-                    'original_phone' => $this->recipient,
-                    'formatted_phone' => $formattedPhone,
+            if ($result['success']) {
+                // Log successful send
+                $logService->logMessageSent(
+                    'whatsapp',
+                    $this->recipient,
+                    $this->content,
+                    null,
+                    $invoice,
+                    [
+                        'original_phone' => $this->recipient,
+                        'message_id' => $result['message_id'] ?? null,
+                        'provider' => $provider,
+                        'message_length' => mb_strlen($this->content),
+                    ],
+                    $this->userId
+                );
+
+                Log::info('WhatsApp message sent', [
+                    'phone' => $this->recipient,
+                    'message_id' => $result['message_id'] ?? null,
+                    'provider' => $provider,
                     'message_length' => mb_strlen($this->content),
-                ],
-                $this->userId
-            );
-
-            Log::info('WhatsApp message sent', [
-                'phone' => $formattedPhone,
-                'message_length' => mb_strlen($this->content),
-            ]);
+                ]);
+            } else {
+                throw new Exception($result['error'] ?? 'Failed to send WhatsApp message');
+            }
         } catch (Exception $exception) {
             $logService->logMessageFailed(
                 'whatsapp',
                 $this->recipient,
                 $exception->getMessage(),
                 $invoice,
-                ['formatted_phone' => $this->formatPhoneNumber($this->recipient)],
+                [
+                    'original_phone' => $this->recipient,
+                    'provider' => $provider,
+                ],
                 $this->userId
             );
 
             Log::error('Failed to send WhatsApp message', [
                 'phone' => $this->recipient,
+                'provider' => $provider,
                 'exception' => $exception->getMessage(),
             ]);
             throw $exception;
@@ -312,7 +326,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
         // Add country code if not present (customize based on your needs)
         if (! str_starts_with((string) $cleaned, '92')) {
             // 92 is Pakistan code - adjust for your default country
-            return '92' . mb_ltrim((string) $cleaned, '0');
+            return '92'.mb_ltrim((string) $cleaned, '0');
         }
 
         return $cleaned;

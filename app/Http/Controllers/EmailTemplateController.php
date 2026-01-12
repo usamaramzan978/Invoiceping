@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\TemplateVariableService;
 use App\Http\Requests\CreateEmailTemplateRequest;
 use App\Http\Requests\DeleteEmailTemplateRequest;
 use App\Http\Requests\UpdateEmailTemplateRequest;
 use App\Models\EmailTemplate;
+use App\Services\TemplateVariableService;
 use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
