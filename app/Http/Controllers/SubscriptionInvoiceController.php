@@ -7,20 +7,20 @@ namespace App\Http\Controllers;
 use App\Models\SubscriptionInvoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 final class SubscriptionInvoiceController extends Controller
 {
-    use AuthorizesRequests;
 
     /**
      * Display subscription invoices
      */
     public function index(): View
     {
-        $user = Auth::user();
+        Gate::authorize('viewAny', SubscriptionInvoice::class);
+
+        $user = auth()->user();
 
         $invoices = SubscriptionInvoice::query()->where('user_id', $user->id)
             ->with('subscription.plan')->latest()
@@ -51,7 +51,7 @@ final class SubscriptionInvoiceController extends Controller
      */
     public function show(SubscriptionInvoice $invoice): View
     {
-        $this->authorize('view', $invoice);
+        Gate::authorize('view', $invoice);
 
         return view('dashboard.billing.invoices.show', [
             'invoice' => $invoice->load('subscription.plan', 'user'),
@@ -63,7 +63,7 @@ final class SubscriptionInvoiceController extends Controller
      */
     public function download(SubscriptionInvoice $invoice): Response
     {
-        $this->authorize('view', $invoice);
+        Gate::authorize('download', $invoice);
 
         $pdf = Pdf::loadView('dashboard.billing.invoices.pdf', [
             'invoice' => $invoice->load('subscription.plan', 'user'),

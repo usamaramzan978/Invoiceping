@@ -6,19 +6,19 @@ namespace App\Http\Controllers;
 
 use App\Models\BillingTransaction;
 use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 final class BillingController extends Controller
 {
-    use AuthorizesRequests;
 
     /**
      * Display billing history
      */
     public function index(): View
     {
-        $user = Auth::user();
+        Gate::authorize('viewAny', BillingTransaction::class);
+
+        $user = auth()->user();
 
         $transactions = BillingTransaction::query()->where('user_id', $user->id)
             ->with('subscription.plan')->latest()
@@ -40,7 +40,7 @@ final class BillingController extends Controller
      */
     public function show(BillingTransaction $transaction): View
     {
-        $this->authorize('view', $transaction);
+        Gate::authorize('view', $transaction);
 
         return view('dashboard.billing.show', [
             'transaction' => $transaction->load('subscription.plan'),

@@ -18,8 +18,8 @@ use App\Models\ReminderRule;
 use App\Models\ReminderSchedule;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use InvalidArgumentException;
 
@@ -37,7 +37,9 @@ final class ReminderScheduleController extends Controller
      */
     public function index(): View
     {
-        $user = Auth::user();
+        Gate::authorize('viewAny', ReminderSchedule::class);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
@@ -122,7 +124,9 @@ final class ReminderScheduleController extends Controller
      */
     public function create(): View
     {
-        $user = Auth::user();
+        Gate::authorize('create', ReminderSchedule::class);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
@@ -160,8 +164,10 @@ final class ReminderScheduleController extends Controller
      */
     public function store(StoreReminderScheduleRequest $request): RedirectResponse
     {
+        Gate::authorize('create', ReminderSchedule::class);
+
         try {
-            $result = $this->createAction->execute($request->validated(), Auth::id());
+            $result = $this->createAction->execute($request->validated(), auth()->id());
 
             $message = $result['source_type'] === 'rule'
                 ? 'Rule scheduled successfully.'
@@ -180,18 +186,12 @@ final class ReminderScheduleController extends Controller
      */
     public function edit(ReminderSchedule $schedule): View
     {
-        $user = Auth::user();
+        Gate::authorize('update', $schedule);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        // Verify schedule ownership
-        $schedule->loadMissing('invoice.business');
-        abort_unless(
-            $schedule->invoice && $schedule->invoice->business_id === $business->id,
-            403,
-            'You do not have permission to edit this reminder schedule.'
-        );
 
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
@@ -236,8 +236,10 @@ final class ReminderScheduleController extends Controller
      */
     public function update(UpdateReminderScheduleRequest $request, ReminderSchedule $schedule): RedirectResponse
     {
+        Gate::authorize('update', $schedule);
+
         try {
-            $result = $this->updateAction->execute($schedule, $request->validated(), Auth::id());
+            $result = $this->updateAction->execute($schedule, $request->validated(), auth()->id());
 
             $message = $result['source_type'] === 'rule'
                 ? 'Rule updated successfully.'
@@ -256,8 +258,10 @@ final class ReminderScheduleController extends Controller
      */
     public function cancel(ReminderSchedule $schedule): RedirectResponse
     {
+        Gate::authorize('cancel', $schedule);
+
         try {
-            $cancelledCount = $this->cancelAction->execute($schedule, Auth::id());
+            $cancelledCount = $this->cancelAction->execute($schedule, auth()->id());
 
             $message = $cancelledCount > 1
                 ? $cancelledCount.' reminder(s) cancelled successfully.'
@@ -276,11 +280,13 @@ final class ReminderScheduleController extends Controller
      */
     public function reschedule(RescheduleReminderRequest $request, ReminderSchedule $schedule): RedirectResponse
     {
+        Gate::authorize('reschedule', $schedule);
+
         try {
             $rescheduledCount = $this->rescheduleAction->execute(
                 $schedule,
                 Date::parse($request->validated()['scheduled_at']),
-                Auth::id()
+                auth()->id()
             );
 
             $message = $rescheduledCount > 1

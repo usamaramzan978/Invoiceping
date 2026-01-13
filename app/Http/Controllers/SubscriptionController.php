@@ -17,13 +17,11 @@ use App\Http\Requests\UpdateSubscriptionRequest;
 use App\Models\Subscription;
 use Exception;
 use Illuminate\Contracts\View\View;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 final class SubscriptionController extends Controller
 {
-    use AuthorizesRequests;
 
     public function __construct(
         private readonly CreateSubscription $createSubscription,
@@ -38,7 +36,9 @@ final class SubscriptionController extends Controller
      */
     public function index(): View
     {
-        $user = Auth::user();
+        Gate::authorize('viewAny', Subscription::class);
+
+        $user = auth()->user();
         $subscription = $user->activeSubscription;
         $subscriptionHistory = $user->subscriptions()
             ->with('plan')
@@ -56,7 +56,9 @@ final class SubscriptionController extends Controller
      */
     public function store(CreateSubscriptionRequest $request): RedirectResponse
     {
-        $user = Auth::user();
+        Gate::authorize('create', Subscription::class);
+
+        $user = $request->user();
 
         // Check if user already has an active subscription
         if ($user->hasActiveSubscription()) {
@@ -78,7 +80,7 @@ final class SubscriptionController extends Controller
      */
     public function update(UpdateSubscriptionRequest $request, Subscription $subscription): RedirectResponse
     {
-        $this->authorize('update', $subscription);
+        Gate::authorize('update', $subscription);
 
         try {
             $this->changeSubscriptionPlan->execute($subscription, $request->validated());
@@ -95,7 +97,7 @@ final class SubscriptionController extends Controller
      */
     public function cancel(CancelSubscriptionRequest $request, Subscription $subscription): RedirectResponse
     {
-        $this->authorize('cancel', $subscription);
+        Gate::authorize('cancel', $subscription);
 
         try {
             $this->cancelSubscription->execute($subscription, $request->validated());
@@ -116,7 +118,7 @@ final class SubscriptionController extends Controller
      */
     public function resume(Subscription $subscription): RedirectResponse
     {
-        $this->authorize('resume', $subscription);
+        Gate::authorize('resume', $subscription);
 
         try {
             $this->resumeSubscription->execute($subscription);
@@ -133,7 +135,7 @@ final class SubscriptionController extends Controller
      */
     public function switchCycle(SwitchBillingCycleRequest $request, Subscription $subscription): RedirectResponse
     {
-        $this->authorize('update', $subscription);
+        Gate::authorize('update', $subscription);
 
         try {
             $billingCycle = BillingCycle::from($request->input('billing_cycle'));

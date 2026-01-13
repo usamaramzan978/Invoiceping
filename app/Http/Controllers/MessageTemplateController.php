@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\MessageTemplate\CreateMessageTemplateAction;
+use App\Actions\MessageTemplate\DeleteMessageTemplateAction;
+use App\Actions\MessageTemplate\UpdateMessageTemplateAction;
+use App\Http\Requests\StoreMessageTemplateRequest;
+use App\Http\Requests\UpdateMessageTemplateRequest;
 use App\Models\MessageTemplates;
 use App\Services\TemplateVariableService;
 use Illuminate\Contracts\View\Factory;
@@ -11,17 +16,23 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 
 final class MessageTemplateController extends Controller
 {
+    public function __construct(
+        private readonly CreateMessageTemplateAction $createAction,
+        private readonly UpdateMessageTemplateAction $updateAction,
+        private readonly DeleteMessageTemplateAction $deleteAction
+    ) {}
+
     /**
      * Display a listing of message templates.
      */
     public function index(Request $request): Factory|View
     {
-        Auth::user()->business;
+        Gate::authorize('viewAny', MessageTemplates::class);
+
         $templates = MessageTemplates::query()
             ->where('user_id', auth()->user()->id)->latest()
             ->get();
@@ -34,6 +45,8 @@ final class MessageTemplateController extends Controller
      */
     public function create(): Factory|View
     {
+        Gate::authorize('create', MessageTemplates::class);
+
         $variableService = app(TemplateVariableService::class);
         $availableVariables = $variableService->getAvailableVariables();
 
@@ -45,34 +58,11 @@ final class MessageTemplateController extends Controller
     /**
      * Store a newly created message template in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreMessageTemplateRequest $request): RedirectResponse
     {
-        $business = Auth::user()->business;
+        Gate::authorize('create', MessageTemplates::class);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'channel' => ['required', 'string', Rule::in(['whatsapp', 'sms'])],
-            'content' => ['required', 'string', 'max:5000'],
-            'is_default' => ['required', 'boolean'],
-            'is_active' => ['required', 'boolean'],
-        ]);
-
-        // If setting as default, unset other defaults for this channel
-        if ($validated['is_default']) {
-            MessageTemplates::query()
-                ->where('business_id', $business->id)
-                ->where('channel', $validated['channel'])
-                ->update(['is_default' => false]);
-        }
-
-        MessageTemplates::query()->create([
-            'business_id' => $business->id,
-            'name' => $validated['name'],
-            'channel' => $validated['channel'],
-            'content' => $validated['content'],
-            'is_default' => $validated['is_default'],
-            'is_active' => $validated['is_active'],
-        ]);
+        $this->createAction->execute(auth()->id(), $request->validated());
 
         return to_route('templates.index')->with('success', 'Template created successfully!');
     }
@@ -80,9 +70,9 @@ final class MessageTemplateController extends Controller
     /**
      * Display the specified message template.
      */
-    public function show(string $id): Factory|View
+    public function show(MessageTemplates $template): Factory|View
     {
-        $template = MessageTemplates::query()->findOrFail($id);
+        Gate::authorize('view', $template);
 
         return view('dashboard.templates.show', ['template' => $template]);
     }
@@ -90,9 +80,10 @@ final class MessageTemplateController extends Controller
     /**
      * Show the form for editing the specified message template.
      */
-    public function edit(string $id): Factory|View
+    public function edit(MessageTemplates $template): Factory|View
     {
-        $template = MessageTemplates::query()->findOrFail($id);
+        Gate::authorize('update', $template);
+
         $variableService = app(TemplateVariableService::class);
         $availableVariables = $variableService->getAvailableVariables();
 
@@ -105,35 +96,11 @@ final class MessageTemplateController extends Controller
     /**
      * Update the specified message template in storage.
      */
-    public function update(Request $request, string $id): RedirectResponse
+    public function update(UpdateMessageTemplateRequest $request, MessageTemplates $template): RedirectResponse
     {
-        $template = MessageTemplates::query()->findOrFail($id);
-        $business = Auth::user()->business;
+        Gate::authorize('update', $template);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'channel' => ['required', 'string', Rule::in(['whatsapp', 'sms'])],
-            'content' => ['required', 'string', 'max:5000'],
-            'is_default' => ['required', 'boolean'],
-            'is_active' => ['required', 'boolean'],
-        ]);
-
-        // If setting as default, unset other defaults for this channel
-        if ($validated['is_default']) {
-            MessageTemplates::query()
-                ->where('business_id', $business->id)
-                ->where('channel', $validated['channel'])
-                ->where('id', '!=', $id)
-                ->update(['is_default' => false]);
-        }
-
-        $template->update([
-            'name' => $validated['name'],
-            'channel' => $validated['channel'],
-            'content' => $validated['content'],
-            'is_default' => $validated['is_default'],
-            'is_active' => $validated['is_active'],
-        ]);
+        $this->updateAction->execute($template, $request->validated());
 
         return to_route('templates.index')->with('success', 'Template updated successfully!');
     }
@@ -141,34 +108,31 @@ final class MessageTemplateController extends Controller
     /**
      * Remove the specified message template from storage.
      */
-    public function destroy(Request $request, string $id): RedirectResponse|JsonResponse
+    public function destroy(Request $request, MessageTemplates $template): RedirectResponse|JsonResponse
     {
-        $template = MessageTemplates::query()->findOrFail($id);
+        Gate::authorize('delete', $template);
 
-        // Prevent deletion of default templates
-        if ($template->is_default) {
-            $message = 'Cannot delete a default template. Set another template as default first.';
+        try {
+            $this->deleteAction->execute($template);
 
             if ($request->wantsJson()) {
                 return response()->json([
+                    'success' => true,
+                    'message' => 'Template deleted successfully!',
+                    'redirect' => route('templates.index'),
+                ]);
+            }
+
+            return to_route('templates.index')->with('success', 'Template deleted successfully!');
+        } catch (\InvalidArgumentException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
                     'success' => false,
-                    'message' => $message,
+                    'message' => $e->getMessage(),
                 ], 422);
             }
 
-            return to_route('templates.index')->with('error', $message);
+            return to_route('templates.index')->with('error', $e->getMessage());
         }
-
-        $template->delete();
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Template deleted successfully!',
-                'redirect' => route('templates.index'),
-            ]);
-        }
-
-        return to_route('templates.index')->with('success', 'Template deleted successfully!');
     }
 }

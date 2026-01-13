@@ -10,6 +10,14 @@ use App\Models\User;
 final class SubscriptionInvoicePolicy
 {
     /**
+     * Determine whether the user can view any models.
+     */
+    public function viewAny(User $user): bool
+    {
+        return true; // Authenticated users can view their own invoices
+    }
+
+    /**
      * Determine if the user can view the invoice
      */
     public function view(User $user, SubscriptionInvoice $invoice): bool

@@ -4,21 +4,34 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\ReminderRule\CreateReminderRuleAction;
+use App\Actions\ReminderRule\DeleteReminderRuleAction;
+use App\Actions\ReminderRule\ToggleStatusReminderRuleAction;
+use App\Actions\ReminderRule\UpdateReminderRuleAction;
+use App\Http\Requests\StoreReminderRuleRequest;
+use App\Http\Requests\UpdateReminderRuleRequest;
 use App\Models\EmailTemplate;
 use App\Models\MessageTemplates;
 use App\Models\ReminderRule;
-use App\Models\ReminderRuleStep;
-use App\Models\ReminderRuleStepTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 final class ReminderRuleController extends Controller
 {
+    public function __construct(
+        private readonly CreateReminderRuleAction $createAction,
+        private readonly UpdateReminderRuleAction $updateAction,
+        private readonly DeleteReminderRuleAction $deleteAction,
+        private readonly ToggleStatusReminderRuleAction $toggleStatusAction
+    ) {}
+
     public function index(): View
     {
+        Gate::authorize('viewAny', ReminderRule::class);
+
         $rules = ReminderRule::with('steps.templates')
             ->where('user_id', auth()->id())
             ->latest()
@@ -29,6 +42,8 @@ final class ReminderRuleController extends Controller
 
     public function create(): View
     {
+        Gate::authorize('create', ReminderRule::class);
+
         $userId = auth()->user()->id;
 
         // Get WhatsApp & SMS templates from message_templates table
@@ -49,65 +64,19 @@ final class ReminderRuleController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreReminderRuleRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'is_default' => ['boolean'],
-            'steps' => ['required', 'array', 'min:1'],
-            'steps.*.reminder_type' => ['required', 'string'],
-            'steps.*.offset_days' => ['required', 'integer'],
-            'steps.*.channels' => ['required', 'array'],
-            'steps.*.channels.*.channel' => ['required', 'string'],
-            'steps.*.channels.*.message_template_id' => ['nullable', 'uuid'],
-            'steps.*.channels.*.email_template_id' => ['nullable', 'integer'],
-        ]);
+        Gate::authorize('create', ReminderRule::class);
 
-        DB::transaction(function () use ($request): void {
-            if ($request->is_default) {
-                ReminderRule::query()->where('user_id', auth()->id())->update(['is_default' => false]);
-            }
-
-            $rule = ReminderRule::query()->create([
-                'user_id' => auth()->id(),
-                'name' => $request->name,
-                'is_default' => $request->is_default ?? false,
-                'is_active' => true,
-            ]);
-
-            foreach ($request->steps as $index => $stepData) {
-                $step = ReminderRuleStep::query()->create([
-                    'reminder_rule_id' => $rule->id,
-                    'reminder_type' => $stepData['reminder_type'],
-                    'offset_days' => $stepData['offset_days'],
-                    'sort_order' => $index,
-                ]);
-
-                foreach ($stepData['channels'] as $channelData) {
-                    $templateData = [
-                        'reminder_rule_step_id' => $step->id,
-                        'channel' => $channelData['channel'],
-                    ];
-
-                    // Handle email templates (from email_templates table)
-                    if ($channelData['channel'] === 'email' && ! empty($channelData['email_template_id'])) {
-                        $templateData['email_template_id'] = $channelData['email_template_id'];
-                        ReminderRuleStepTemplate::query()->create($templateData);
-                    }
-                    // Handle WhatsApp/SMS templates (from message_templates table)
-                    elseif (in_array($channelData['channel'], ['whatsapp', 'sms']) && ! empty($channelData['message_template_id'])) {
-                        $templateData['message_template_id'] = $channelData['message_template_id'];
-                        ReminderRuleStepTemplate::query()->create($templateData);
-                    }
-                }
-            }
-        });
+        $this->createAction->execute(auth()->id(), $request->validated());
 
         return to_route('reminder-rules.index')->with('success', 'Reminder rule created successfully.');
     }
 
     public function edit(ReminderRule $rule): View
     {
+        Gate::authorize('update', $rule);
+
         $rule->load('steps.templates');
         $userId = auth()->user()->id;
 
@@ -130,72 +99,20 @@ final class ReminderRuleController extends Controller
         ]);
     }
 
-    public function update(Request $request, ReminderRule $rule): RedirectResponse
+    public function update(UpdateReminderRuleRequest $request, ReminderRule $rule): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'is_default' => ['boolean'],
-            'steps' => ['required', 'array', 'min:1'],
-            'steps.*.reminder_type' => ['required', 'string'],
-            'steps.*.offset_days' => ['required', 'integer'],
-            'steps.*.channels' => ['required', 'array'],
-            'steps.*.channels.*.channel' => ['required', 'string'],
-            'steps.*.channels.*.message_template_id' => ['nullable', 'uuid'],
-            'steps.*.channels.*.email_template_id' => ['nullable', 'integer'],
-        ]);
+        Gate::authorize('update', $rule);
 
-        DB::transaction(function () use ($request, $rule): void {
-            if ($request->is_default) {
-                ReminderRule::query()->where('user_id', auth()->id())
-                    ->where('id', '!=', $rule->id)
-                    ->update(['is_default' => false]);
-            }
-
-            $rule->update([
-                'name' => $request->name,
-                'is_default' => $request->is_default ?? false,
-            ]);
-
-            // Simple approach: delete and recreate steps
-            $rule->steps()->each(function ($step): void {
-                $step->templates()->delete();
-                $step->delete();
-            });
-
-            foreach ($request->steps as $index => $stepData) {
-                $step = ReminderRuleStep::query()->create([
-                    'reminder_rule_id' => $rule->id,
-                    'reminder_type' => $stepData['reminder_type'],
-                    'offset_days' => $stepData['offset_days'],
-                    'sort_order' => $index,
-                ]);
-
-                foreach ($stepData['channels'] as $channelData) {
-                    $templateData = [
-                        'reminder_rule_step_id' => $step->id,
-                        'channel' => $channelData['channel'],
-                    ];
-
-                    // Handle email templates (from email_templates table)
-                    if ($channelData['channel'] === 'email' && ! empty($channelData['email_template_id'])) {
-                        $templateData['email_template_id'] = $channelData['email_template_id'];
-                        ReminderRuleStepTemplate::query()->create($templateData);
-                    }
-                    // Handle WhatsApp/SMS templates (from message_templates table)
-                    elseif (in_array($channelData['channel'], ['whatsapp', 'sms']) && ! empty($channelData['message_template_id'])) {
-                        $templateData['message_template_id'] = $channelData['message_template_id'];
-                        ReminderRuleStepTemplate::query()->create($templateData);
-                    }
-                }
-            }
-        });
+        $this->updateAction->execute($rule, $request->validated());
 
         return to_route('reminder-rules.index')->with('success', 'Reminder rule updated successfully.');
     }
 
     public function destroy(Request $request, ReminderRule $rule): RedirectResponse|JsonResponse
     {
-        $rule->delete();
+        Gate::authorize('delete', $rule);
+
+        $this->deleteAction->execute($rule);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -210,7 +127,9 @@ final class ReminderRuleController extends Controller
 
     public function toggleStatus(ReminderRule $rule): RedirectResponse
     {
-        $rule->update(['is_active' => ! $rule->is_active]);
+        Gate::authorize('toggleStatus', $rule);
+
+        $this->toggleStatusAction->execute($rule);
 
         return back()->with('success', 'Status updated successfully.');
     }

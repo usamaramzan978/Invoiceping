@@ -13,7 +13,7 @@ use App\Models\ReminderRule;
 use App\Models\ReminderSchedule;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use InvalidArgumentException;
 
@@ -29,7 +29,9 @@ final class RuleScheduledController extends Controller
      */
     public function create(): View
     {
-        $user = Auth::user();
+        Gate::authorize('create', ReminderSchedule::class);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
@@ -55,8 +57,10 @@ final class RuleScheduledController extends Controller
      */
     public function store(StoreRuleScheduledRequest $request): RedirectResponse
     {
+        Gate::authorize('create', ReminderSchedule::class);
+
         try {
-            $result = $this->createAction->execute($request->validated(), Auth::id());
+            $result = $this->createAction->execute($request->validated(), auth()->id());
 
             $message = $result['created_count'] > 1
                 ? 'Rule scheduled successfully for '.$result['created_count'].' reminder(s).'
@@ -75,18 +79,12 @@ final class RuleScheduledController extends Controller
      */
     public function edit(ReminderSchedule $schedule): View
     {
-        $user = Auth::user();
+        Gate::authorize('update', $schedule);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        // Verify schedule ownership and that it's rule-based
-        $schedule->loadMissing('invoice.business');
-        abort_unless(
-            $schedule->invoice && $schedule->invoice->business_id === $business->id,
-            403,
-            'You do not have permission to edit this reminder schedule.'
-        );
 
         abort_unless(
             $schedule->source_type->value === 'rule',
@@ -125,8 +123,10 @@ final class RuleScheduledController extends Controller
      */
     public function update(UpdateRuleScheduledRequest $request, ReminderSchedule $schedule): RedirectResponse
     {
+        Gate::authorize('update', $schedule);
+
         try {
-            $result = $this->updateAction->execute($schedule, $request->validated(), Auth::id());
+            $result = $this->updateAction->execute($schedule, $request->validated(), auth()->id());
 
             $message = $result['created_count'] > 1
                 ? 'Rule updated successfully for '.$result['created_count'].' reminder(s).'

@@ -12,6 +12,8 @@ use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 final class ClientController extends Controller
@@ -24,18 +26,29 @@ final class ClientController extends Controller
 
     public function index(): View
     {
-        $clients = Client::query()->latest()->paginate(15);
+        Gate::authorize('viewAny', Client::class);
+
+        $businessId = auth()->user()->business?->id;
+        
+        $clients = Client::query()
+            ->where('business_id', $businessId)
+            ->latest()
+            ->paginate(15);
 
         return view('dashboard.clients.index', ['clients' => $clients]);
     }
 
     public function create(): View|RedirectResponse
     {
+        Gate::authorize('create', Client::class);
+
         return view('dashboard.clients.create');
     }
 
     public function store(StoreClientRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Client::class);
+
         $data = $request->validated();
         $data['business_id'] = auth()->user()->business->id ?? null;
         $this->createClient->handle($data);
@@ -45,16 +58,22 @@ final class ClientController extends Controller
 
     public function show(Client $client): View
     {
+        Gate::authorize('view', $client);
+
         return view('dashboard.clients.show', ['client' => $client]);
     }
 
     public function edit(Client $client): View
     {
+        Gate::authorize('update', $client);
+
         return view('dashboard.clients.edit', ['client' => $client]);
     }
 
     public function update(UpdateClientRequest $request, Client $client): RedirectResponse
     {
+        Gate::authorize('update', $client);
+
         $data = $request->validated();
         $this->updateClient->handle($client, $data);
 
@@ -63,6 +82,8 @@ final class ClientController extends Controller
 
     public function destroy(Request $request, Client $client): RedirectResponse|JsonResponse
     {
+        Gate::authorize('delete', $client);
+
         $this->deleteClient->handle($client);
 
         if ($request->wantsJson()) {

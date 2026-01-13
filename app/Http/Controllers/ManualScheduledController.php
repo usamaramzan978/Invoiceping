@@ -14,7 +14,7 @@ use App\Models\MessageTemplates;
 use App\Models\ReminderSchedule;
 use Exception;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use InvalidArgumentException;
 
@@ -30,7 +30,9 @@ final class ManualScheduledController extends Controller
      */
     public function create(): View
     {
-        $user = Auth::user();
+        Gate::authorize('create', ReminderSchedule::class);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
@@ -62,8 +64,10 @@ final class ManualScheduledController extends Controller
      */
     public function store(StoreManualScheduledRequest $request): RedirectResponse
     {
+        Gate::authorize('create', ReminderSchedule::class);
+
         try {
-            $result = $this->createAction->execute($request->validated(), Auth::id());
+            $result = $this->createAction->execute($request->validated(), auth()->id());
 
             $message = $result['created_count'] > 1
                 ? $result['created_count'].' reminder(s) scheduled successfully.'
@@ -82,18 +86,12 @@ final class ManualScheduledController extends Controller
      */
     public function edit(ReminderSchedule $schedule): View
     {
-        $user = Auth::user();
+        Gate::authorize('update', $schedule);
+
+        $user = auth()->user();
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        // Verify schedule ownership and that it's manual
-        $schedule->loadMissing('invoice.business');
-        abort_unless(
-            $schedule->invoice && $schedule->invoice->business_id === $business->id,
-            403,
-            'You do not have permission to edit this reminder schedule.'
-        );
 
         abort_unless(
             $schedule->source_type->value === 'manual',
@@ -138,8 +136,10 @@ final class ManualScheduledController extends Controller
      */
     public function update(UpdateManualScheduledRequest $request, ReminderSchedule $schedule): RedirectResponse
     {
+        Gate::authorize('update', $schedule);
+
         try {
-            $result = $this->updateAction->execute($schedule, $request->validated(), Auth::id());
+            $result = $this->updateAction->execute($schedule, $request->validated(), auth()->id());
 
             $message = $result['created_count'] > 1
                 ? $result['created_count'].' reminder(s) updated successfully.'

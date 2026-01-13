@@ -11,10 +11,12 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 final class WhatsAppProvider extends Model
 {
     use HasFactory;
+    use HasUuids;
 
     protected $table = 'whatsapp_providers';
 
@@ -205,7 +207,7 @@ final class WhatsAppProvider extends Model
             }
 
             if (! $user) {
-                throw new Exception('User not found for encryption. User ID: '.($this->user_id ?? 'null'));
+                throw new Exception('User not found for encryption. User ID: ' . ($this->user_id ?? 'null'));
             }
 
             $encrypted = $service->encryptToken(
@@ -217,7 +219,7 @@ final class WhatsAppProvider extends Model
 
             return $encrypted['encrypted_token'];
         } catch (Exception $exception) {
-            Log::error('Failed to encrypt value: '.$exception->getMessage(), [
+            Log::error('Failed to encrypt value: ' . $exception->getMessage(), [
                 'user_id' => $this->user_id,
                 'field' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? 'unknown',
             ]);
@@ -265,7 +267,7 @@ final class WhatsAppProvider extends Model
 
             return $decrypted['token'];
         } catch (Exception $exception) {
-            Log::error('Failed to decrypt value: '.$exception->getMessage(), [
+            Log::error('Failed to decrypt value: ' . $exception->getMessage(), [
                 'user_id' => $this->user_id,
             ]);
 

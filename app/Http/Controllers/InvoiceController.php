@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Actions\Invoice\CreateInvoiceAction;
+use App\Actions\Invoice\DeleteInvoiceAction;
 use App\Actions\Invoice\UpdateInvoiceAction;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
@@ -15,17 +16,20 @@ use App\Models\MessageTemplates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 final class InvoiceController extends Controller
 {
     public function __construct(
         private readonly CreateInvoiceAction $createInvoice,
+        private readonly DeleteInvoiceAction $deleteInvoice,
     ) {}
 
     public function index(): View|RedirectResponse
     {
+        Gate::authorize('viewAny', Invoice::class);
+
         $user = auth()->user();
 
         if (! $user->business) {
@@ -78,6 +82,8 @@ final class InvoiceController extends Controller
 
     public function create(): View
     {
+        Gate::authorize('create', Invoice::class);
+
         $clients = auth()->user()->business?->clients ?? collect();
 
         return view('dashboard.invoices.create', ['clients' => $clients]);
@@ -85,6 +91,8 @@ final class InvoiceController extends Controller
 
     public function store(StoreInvoiceRequest $request): RedirectResponse
     {
+        Gate::authorize('create', Invoice::class);
+
         $this->createInvoice->execute(auth()->user()->business, $request->validated());
 
         return to_route('invoices.index')->with('success', 'Invoice created successfully.');
@@ -92,6 +100,8 @@ final class InvoiceController extends Controller
 
     public function show(Invoice $invoice): View
     {
+        Gate::authorize('view', $invoice);
+
         $invoice->load(['client', 'items']);
 
         return view('dashboard.invoices.show', ['invoice' => $invoice]);
@@ -99,6 +109,8 @@ final class InvoiceController extends Controller
 
     public function edit(Invoice $invoice): View
     {
+        Gate::authorize('update', $invoice);
+
         $invoice->load(['items']);
         $clients = auth()->user()->business?->clients ?? collect();
 
@@ -107,6 +119,8 @@ final class InvoiceController extends Controller
 
     public function update(UpdateInvoiceRequest $request, Invoice $invoice, UpdateInvoiceAction $action): RedirectResponse
     {
+        Gate::authorize('update', $invoice);
+
         $action->execute($invoice, $request->validated());
 
         return to_route('invoices.show', $invoice)->with('success', 'Invoice updated successfully.');
@@ -158,7 +172,9 @@ final class InvoiceController extends Controller
 
     public function destroy(Request $request, Invoice $invoice): RedirectResponse|JsonResponse
     {
-        $invoice->delete();
+        Gate::authorize('delete', $invoice);
+
+        $this->deleteInvoice->execute($invoice);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -173,7 +189,9 @@ final class InvoiceController extends Controller
 
     public function allForBusiness(Request $request)
     {
-        $userId = Auth::user()->id;
+        Gate::authorize('viewAny', Invoice::class);
+
+        $userId = auth()->id();
 
         // Get email templates from email_templates table
         $emailTemplates = EmailTemplate::query()
