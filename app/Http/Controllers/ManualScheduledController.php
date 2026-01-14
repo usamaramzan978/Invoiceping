@@ -39,6 +39,7 @@ final class ManualScheduledController extends Controller
 
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
+            ->with('client')
             ->latest()
             ->get();
 
@@ -101,6 +102,7 @@ final class ManualScheduledController extends Controller
 
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
+            ->with('client')
             ->latest()
             ->get();
 

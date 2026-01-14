@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessProfileController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LogController;
@@ -19,19 +20,17 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionInvoiceController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\WhatsAppProviderController;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function (): void {
 
-    Route::get('/home', fn (): Factory|View => view('welcome'))->name('home');
+    Route::get('/home', [DashboardController::class, 'index'])->name('home');
 
     Route::resource('clients', ClientController::class);
     Route::resource('business-profile', BusinessProfileController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     //    Invoice Routes
     Route::post('invoices/preview', [InvoiceController::class, 'preview'])->name('invoices.preview');
-    Route::post('invoice/download', [InvoiceController::class, 'download'])->name('invoice.download');
+    Route::get('invoice/{invoice}/download', [InvoiceController::class, 'download'])->name('invoice.download');
     Route::resource('invoices', InvoiceController::class);
     Route::get('message-templates-invoice', [InvoiceController::class, 'allForBusiness'])->name('message-templates-invoice');
     Route::post('invoices/send-message', [SendInvoiceMessageController::class, 'send'])->name('invoices.send-message');
@@ -114,4 +113,3 @@ Route::middleware(['auth'])->group(function (): void {
     });
 });
 
-// Explicit routes

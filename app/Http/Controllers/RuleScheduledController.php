@@ -38,6 +38,7 @@ final class RuleScheduledController extends Controller
 
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
+            ->with('client')
             ->latest()
             ->get();
 
@@ -94,6 +95,7 @@ final class RuleScheduledController extends Controller
 
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
+            ->with('client')
             ->latest()
             ->get();
 

@@ -43,23 +43,6 @@
                                     <img src="{{ asset('build/assets/images/brand-logos/toggle-logo.png') }}"
                                         alt="">
                                 </div>
-                                {{-- <div class="ms-sm-2 ms-0 mt-sm-0 mt-2">
-                                <input type="text" class="form-control form-control-light form-control-sm"
-                                    placeholder="Invoice Title" value="INV TITLE">
-                            </div>
-                            <div class="mx-2">:</div>
-                            <div class="mt-sm-0 mt-2">
-                                <input type="text" class="form-control form-control-light form-control-sm"
-                                    placeholder="Invoice ID" value="INV ID">
-                            </div> --}}
-                            </div>
-                            <div class="ms-auto mt-md-0 mt-2">
-                                <button class="btn btn-sm btn-primary me-2">Save As PDF<i
-                                        class="ri-file-pdf-line ms-1 align-middle d-inline-block"></i></button>
-                                {{-- <button class="btn btn-sm btn-icon btn-secondary-light me-2"><i
-                                    class="bi bi-plus-lg"></i></button>
-                            <button class="btn btn-sm btn-icon btn-success-light me-2"><i
-                                    class="bi bi-download"></i></button> --}}
                             </div>
                         </div>
                         <div class="card-body">

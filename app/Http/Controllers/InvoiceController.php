@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Invoice\CreateInvoiceAction;
 use App\Actions\Invoice\DeleteInvoiceAction;
+use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Actions\Invoice\UpdateInvoiceAction;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
@@ -16,14 +17,18 @@ use App\Models\MessageTemplates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class InvoiceController extends Controller
 {
     public function __construct(
         private readonly CreateInvoiceAction $createInvoice,
         private readonly DeleteInvoiceAction $deleteInvoice,
+        private readonly GenerateInvoicePdfAction $generateInvoicePdf,
     ) {}
 
     public function index(): View|RedirectResponse
@@ -102,7 +107,7 @@ final class InvoiceController extends Controller
     {
         Gate::authorize('view', $invoice);
 
-        $invoice->load(['client', 'items']);
+        $invoice->load(['client', 'items', 'business']);
 
         return view('dashboard.invoices.show', ['invoice' => $invoice]);
     }
@@ -187,6 +192,34 @@ final class InvoiceController extends Controller
         return to_route('invoices.index')->with('success', 'Invoice deleted successfully.');
     }
 
+
+    public function download(Request $request, Invoice $invoice): Response|StreamedResponse
+    {
+        Gate::authorize('view', $invoice);
+
+        // Get design from request (default to design 1)
+        $design = (int) $request->get('design', 1);
+
+        // Validate design number (1-6)
+        if ($design < 1 || $design > 6) {
+            $design = 1;
+        }
+
+        // Always regenerate PDF to ensure it's up-to-date
+        $pdfPath = $this->generateInvoicePdf->execute($invoice, $design);
+
+        if (! $pdfPath || ! Storage::disk('public')->exists($pdfPath)) {
+            abort(500, 'Unable to generate invoice PDF.');
+        }
+
+        return response()->stream(function () use ($pdfPath) {
+            echo Storage::disk('public')->get($pdfPath);
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="invoice-' . $invoice->invoice_number . '.pdf"',
+        ]);
+    }
+
     public function allForBusiness(Request $request)
     {
         Gate::authorize('viewAny', Invoice::class);
@@ -222,7 +255,7 @@ final class InvoiceController extends Controller
             ->where('is_active', true)
             ->whereIn('channel', ['whatsapp', 'sms'])
             ->get()
-            ->map(fn ($template): array => [
+            ->map(fn($template): array => [
                 'id' => $template->id,
                 'name' => $template->name,
                 'content' => $template->content,

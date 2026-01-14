@@ -20,6 +20,9 @@ final class UpdateBusinessProfileRequest extends FormRequest
             'whatsapp_number' => ['required', 'string', 'max:20'],
             'whatsapp_number_e164' => ['nullable', 'string', 'max:20'], // E.164 formatted number
             'email' => ['nullable', 'email', 'max:150'],
+            'address' => ['nullable', 'string'],
+            'tax_id' => ['nullable', 'string', 'max:50'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:2048'], // 2MB max
             'currency' => ['nullable', 'string', 'max:10'],
             'timezone' => ['nullable', 'string', 'max:50'],
             'default_reminder_days_before' => ['integer', 'min:0'],

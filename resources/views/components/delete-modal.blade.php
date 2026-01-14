@@ -102,12 +102,9 @@
 
             if (missingElements.length > 0) {
                 console.error('Delete modal elements missing:', missingElements);
-                console.log('Available elements:', requiredElements);
                 alert('Delete modal not properly loaded. Missing: ' + missingElements.join(', '));
                 return;
             }
-
-            console.log('All delete modal elements found, initializing...');
 
             // Global delete modal functionality
             window.DeleteModal = {
@@ -154,7 +151,6 @@
 
                         const modal = new bootstrap.Modal(modalElement);
                         modal.show();
-                        console.log('Modal shown successfully');
                     } catch (error) {
                         console.error('Error showing modal:', error);
                         alert('Error showing delete modal: ' + error.message);
@@ -228,27 +224,15 @@
                 const deleteBtn = e.target.closest('[data-delete-modal]');
                 if (deleteBtn) {
                     e.preventDefault();
-                    console.log('Delete button clicked - FOUND!', deleteBtn);
 
                     const title = deleteBtn.getAttribute('data-title') || 'Confirm Delete';
                     const message = deleteBtn.getAttribute('data-message') ||
                         'Are you sure you want to delete this record?';
                     const formId = deleteBtn.getAttribute('data-form-id');
                     const recordName = deleteBtn.getAttribute('data-record-name') || 'record';
-
-                    console.log('Modal data:', {
-                        title,
-                        message,
-                        formId,
-                        recordName
-                    });
                     window.DeleteModal.show(title, message, formId, recordName);
                 }
             });
-
-            console.log('Delete modal initialized successfully');
-            console.log('Modal element exists:', !!document.getElementById('deleteConfirmationModal'));
-            console.log('Delete buttons found:', document.querySelectorAll('[data-delete-modal]').length);
         }
 
         checkBootstrapAndInit();

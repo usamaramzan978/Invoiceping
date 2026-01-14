@@ -65,12 +65,6 @@
                                         class="text-primary">#{{ $invoiceData->invoice_number }}</span></div>
                             </div>
                         </div>
-                        <div class="ms-auto mt-md-0 mt-2">
-                            <button class="btn btn-sm btn-secondary me-1" onclick="javascript:window.print();">Print<i
-                                    class="ri-printer-line ms-1 align-middle d-inline-block"></i></button>
-                            <button class="btn btn-sm btn-primary">Save As PDF<i
-                                    class="ri-file-pdf-line ms-1 align-middle d-inline-block"></i></button>
-                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row gy-3">

@@ -176,21 +176,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination mb-0 float-end">
-                                <li class="page-item disabled">
-                                    <a class="page-link">Previous</a>
-                                </li>
-                                <li class="page-item"><a class="page-link" href="javascript:void(0);">1</a></li>
-                                <li class="page-item active" aria-current="page">
-                                    <a class="page-link" href="javascript:void(0);">2</a>
-                                </li>
-                                <li class="page-item"><a class="page-link" href="javascript:void(0);">3</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="javascript:void(0);">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
+                        {{ $invoices->links() }}
                     </div>
                 </div>
             </div>

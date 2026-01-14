@@ -5,7 +5,6 @@
 
 @section('content')
     <div class="container-fluid">
-
         <!-- Page Header -->
         <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
             <h1 class="page-title fw-semibold fs-18 mb-0">Invoice Details</h1>
@@ -22,12 +21,17 @@
 
         <!-- Start::row-1 -->
         <div class="row">
-            <div class="col-xl-9">
+            <div class="col-xl-12">
                 <div class="card custom-card">
                     <div class="card-header d-md-flex d-block">
                         <div class="h5 mb-0 d-sm-flex d-bllock align-items-center">
                             <div class="avatar avatar-sm">
-                                <img src="{{ asset('build/assets/images/brand-logos/toggle-logo.png') }}" alt="">
+                                @if ($invoice->business?->image)
+                                    <img src="{{ asset('storage/' . $invoice->business->image) }}" alt="Logo">
+                                @else
+                                    <img src="{{ asset('build/assets/images/brand-logos/toggle-logo.png') }}"
+                                        alt="Logo">
+                                @endif
                             </div>
                             <div class="ms-sm-2 ms-0 mt-sm-0 mt-2">
                                 <div class="h6 fw-semibold mb-0">INVOICE : <span
@@ -35,13 +39,13 @@
                             </div>
                         </div>
                         <div class="ms-auto mt-md-0 mt-2">
-                            <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-sm btn-warning me-1">
-                                <i class="ri-edit-line me-1 align-middle d-inline-block"></i>Edit
-                            </a>
-                            <button class="btn btn-sm btn-secondary me-1" onclick="javascript:window.print();">Print<i
-                                    class="ri-printer-line ms-1 align-middle d-inline-block"></i></button>
-                            <button class="btn btn-sm btn-primary">Save As PDF<i
-                                    class="ri-file-pdf-line ms-1 align-middle d-inline-block"></i></button>
+                            <button class="btn btn-sm btn-secondary me-1" onclick="javascript:window.print();">Print
+                                <i class="ri-printer-line ms-1 align-middle d-inline-block"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#selectDesignModal">
+                                Generate PDF
+                                <i class="ri-file-pdf-line ms-1 align-middle d-inline-block"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -49,42 +53,32 @@
                             <div class="col-xl-12">
                                 <div class="row">
                                     <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6">
-                                        <p class="text-muted mb-2">
-                                            Billing From :
-                                        </p>
-                                        <p class="fw-bold mb-1">
-                                            {{ $invoice->business->business_name }}
-                                        </p>
-                                        @if($invoice->business->address)
-                                        <p class="mb-1 text-muted">
-                                            {{ $invoice->business->address }}
-                                        </p>
+                                        <p class="text-muted mb-2"> Billing From : </p>
+                                        <p class="fw-bold mb-1">{{ $invoice->business?->business_name ?? 'N/A' }}</p>
+                                        @if ($invoice->business?->address)
+                                            <p class="mb-1 text-muted">{{ $invoice->business->address }}</p>
                                         @endif
-                                        <p class="mb-1 text-muted">
-                                            {{ $invoice->business->email }}
-                                        </p>
-                                        <p class="mb-1 text-muted">
-                                            {{ $invoice->business->whatsapp_number }}
-                                        </p>
+                                        @if ($invoice->business?->email)
+                                            <p class="mb-1 text-muted">{{ $invoice->business->email }}</p>
+                                        @endif
+                                        @if ($invoice->business?->whatsapp_number)
+                                            <p class="mb-1 text-muted">{{ $invoice->business->whatsapp_number }}</p>
+                                        @endif
+                                        @if ($invoice->business?->tax_id)
+                                            <p class="text-muted">For more information check for <a
+                                                    href="javascript:void(0);" class="text-primary fw-semibold"><u>Tax ID:
+                                                        {{ $invoice->business->tax_id }}</u></a></p>
+                                        @endif
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 ms-auto mt-sm-0 mt-3">
-                                        <p class="text-muted mb-2">
-                                            Billing To :
-                                        </p>
-                                        <p class="fw-bold mb-1">
-                                            {{ $invoice->client->name }}
-                                        </p>
-                                        @if($invoice->client->address)
-                                        <p class="text-muted mb-1">
-                                            {{ $invoice->client->address }}
-                                        </p>
+                                        <p class="text-muted mb-2"> Billing To : </p>
+                                        <p class="fw-bold mb-1">{{ $invoice->client->name ?? 'N/A' }}</p>
+                                        @if ($invoice->client?->email)
+                                            <p class="text-muted mb-1">{{ $invoice->client->email }}</p>
                                         @endif
-                                        <p class="text-muted mb-1">
-                                            {{ $invoice->client->email }}
-                                        </p>
-                                        <p class="text-muted">
-                                            {{ $invoice->client->whatsapp_number }}
-                                        </p>
+                                        @if ($invoice->client?->whatsapp_number)
+                                            <p class="text-muted mb-1">{{ $invoice->client->whatsapp_number }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +88,10 @@
                             </div>
                             <div class="col-xl-3">
                                 <p class="fw-semibold text-muted mb-1">Date Issued :</p>
-                                <p class="fs-15 mb-1">{{ $invoice->issue_date->format('d M, Y') }}</p>
+                                <p class="fs-15 mb-1">{{ $invoice->issue_date->format('d M, Y') }}@if ($invoice->sent_at)
+                                        - <span class="text-muted fs-12">{{ $invoice->sent_at->format('h:i A') }}</span>
+                                    @endif
+                                </p>
                             </div>
                             <div class="col-xl-3">
                                 <p class="fw-semibold text-muted mb-1">Due Date :</p>
@@ -102,7 +99,8 @@
                             </div>
                             <div class="col-xl-3">
                                 <p class="fw-semibold text-muted mb-1">Total Amount :</p>
-                                <p class="fs-16 mb-1 fw-semibold">{{ $invoice->currency }} {{ number_format($invoice->total_amount, 2) }}</p>
+                                <p class="fs-16 mb-1 fw-semibold">{{ $invoice->currency ?? 'USD' }}
+                                    {{ number_format($invoice->total_amount, 2) }}</p>
                             </div>
                             <div class="col-xl-12">
                                 <div class="table-responsive">
@@ -119,36 +117,68 @@
                                         <tbody>
                                             @php
                                                 $subtotal = 0;
+                                                $currency = $invoice->currency ?? 'USD';
+                                                $currencySymbol = match ($currency) {
+                                                    'USD' => '$',
+                                                    'EUR' => '€',
+                                                    'PKR' => '₨',
+                                                    'GBP' => '£',
+                                                    'INR' => '₹',
+                                                    'AED' => 'د.إ',
+                                                    default => '$',
+                                                };
                                             @endphp
-                                            @foreach($invoice->items as $item)
-                                            @php
-                                                $subtotal += $item->line_total;
-                                            @endphp
+                                            @forelse ($invoice->items as $item)
+                                                @php
+                                                    $itemTotal = $item->quantity * $item->unit_price;
+                                                    $subtotal += $itemTotal;
+                                                @endphp
                                             <tr>
                                                 <td>
-                                                    <div class="fw-semibold">
-                                                        {{ $item->name }}
-                                                    </div>
+                                                        <div class="fw-semibold">{{ $item->name }}</div>
                                                 </td>
                                                 <td>
-                                                    <div class="text-muted">
-                                                        {{ $item->description ?? '-' }}
-                                                    </div>
+                                                        <div class="text-muted">{{ $item->description ?? '—' }}</div>
                                                 </td>
-                                                <td class="product-quantity-container">
-                                                    {{ number_format($item->quantity, 2) }}
+                                                    <td class="product-quantity-container">
+                                                        {{ number_format($item->quantity, 2) }}</td>
+                                                    <td>{{ $currencySymbol }}{{ number_format($item->unit_price, 2) }}
                                                 </td>
-                                                <td>
-                                                    {{ $invoice->currency }} {{ number_format($item->unit_price, 2) }}
-                                                </td>
-                                                <td>
-                                                    {{ $invoice->currency }} {{ number_format($item->line_total, 2) }}
+                                                    <td>{{ $currencySymbol }}{{ number_format($itemTotal, 2) }}</td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                    <td colspan="5" class="text-center text-muted py-4">
+                                                        <i class="ri-inbox-line fs-24 d-block mb-2"></i>
+                                                        No items found.
                                                 </td>
                                             </tr>
-                                            @endforeach
+                                            @endforelse
                                             <tr>
                                                 <td colspan="3"></td>
                                                 <td colspan="2">
+                                                    @php
+                                                        $discountAmount = $invoice->discount_amount ?? 0;
+                                                        $taxAmount = $invoice->tax_amount ?? 0;
+                                                        $totalAmount = $invoice->total_amount ?? 0;
+
+                                                        // Calculate discount percentage if discount type is percent
+                                                        $discountPercent = 0;
+                                                        if (
+                                                            $invoice->discount_type &&
+                                                            $invoice->discount_type->value === 'percent' &&
+                                                            $subtotal > 0
+                                                        ) {
+                                                            $discountPercent = ($discountAmount / $subtotal) * 100;
+                                                        }
+
+                                                        // Calculate tax percentage
+                                                        $taxPercent = 0;
+                                                        $taxableAmount = $subtotal - $discountAmount;
+                                                        if ($taxAmount > 0 && $taxableAmount > 0) {
+                                                            $taxPercent = ($taxAmount / $taxableAmount) * 100;
+                                                        }
+                                                    @endphp
                                                     <table class="table table-sm text-nowrap mb-0 table-borderless">
                                                         <tbody>
                                                             <tr>
@@ -156,38 +186,38 @@
                                                                     <p class="mb-0">Sub Total :</p>
                                                                 </th>
                                                                 <td>
-                                                                    <p class="mb-0 fw-semibold fs-15">{{ $invoice->currency }} {{ number_format($subtotal, 2) }}</p>
+                                                                    <p class="mb-0 fw-semibold fs-15">
+                                                                        {{ $currencySymbol }}{{ number_format($subtotal, 2) }}
+                                                                    </p>
                                                                 </td>
                                                             </tr>
-                                                            @if($invoice->discount_amount > 0)
+                                                            @if ($discountAmount > 0)
                                                             <tr>
                                                                 <th scope="row">
-                                                                    <p class="mb-0">Discount
-                                                                        @if($invoice->discount_type === 'percent')
-                                                                            <span class="text-success">({{ number_format(($invoice->discount_amount / $subtotal) * 100, 2) }}%)</span>
-                                                                        @endif
-                                                                        :
-                                                                    </p>
+                                                                        <p class="mb-0">Discount @if ($discountPercent > 0)
+                                                                                <span
+                                                                                    class="text-success">({{ number_format($discountPercent, 1) }}%)</span>
+                                                                            @endif :</p>
                                                                 </th>
                                                                 <td>
-                                                                    <p class="mb-0 fw-semibold fs-15 text-danger">-{{ $invoice->currency }} {{ number_format($invoice->discount_amount, 2) }}</p>
+                                                                        <p class="mb-0 fw-semibold fs-15 text-danger">
+                                                                            -{{ $currencySymbol }}{{ number_format($discountAmount, 2) }}
+                                                                        </p>
                                                                 </td>
                                                             </tr>
                                                             @endif
-                                                            @if($invoice->tax_amount > 0)
+                                                            @if ($taxAmount > 0)
                                                             <tr>
                                                                 <th scope="row">
-                                                                    <p class="mb-0">Tax
-                                                                        @php
-                                                                            $taxableAmount = $subtotal - $invoice->discount_amount;
-                                                                            $taxPercentage = $taxableAmount > 0 ? ($invoice->tax_amount / $taxableAmount) * 100 : 0;
-                                                                        @endphp
-                                                                        <span class="text-danger">({{ number_format($taxPercentage, 2) }}%)</span>
-                                                                        :
-                                                                    </p>
+                                                                        <p class="mb-0">Tax @if ($taxPercent > 0)
+                                                                                <span
+                                                                                    class="text-danger">({{ number_format($taxPercent, 1) }}%)</span>
+                                                                            @endif :</p>
                                                                 </th>
                                                                 <td>
-                                                                    <p class="mb-0 fw-semibold fs-15">+{{ $invoice->currency }} {{ number_format($invoice->tax_amount, 2) }}</p>
+                                                                        <p class="mb-0 fw-semibold fs-15">
+                                                                            {{ $currencySymbol }}{{ number_format($taxAmount, 2) }}
+                                                                        </p>
                                                                 </td>
                                                             </tr>
                                                             @endif
@@ -197,7 +227,8 @@
                                                                 </th>
                                                                 <td>
                                                                     <p class="mb-0 fw-semibold fs-16 text-success">
-                                                                        {{ $invoice->currency }} {{ number_format($invoice->total_amount, 2) }}</p>
+                                                                        {{ $currencySymbol }}{{ number_format($totalAmount, 2) }}
+                                                                    </p>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -208,88 +239,10 @@
                                     </table>
                                 </div>
                             </div>
-                            @if($invoice->notes)
                             <div class="col-xl-12">
                                 <div>
                                     <label for="invoice-note" class="form-label">Note:</label>
-                                    <textarea class="form-control form-control-light" id="invoice-note" rows="3" readonly>{{ $invoice->notes }}</textarea>
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="card-footer text-end">
-                        <a href="{{ route('invoices.index') }}" class="btn btn-secondary me-1">
-                            <i class="ri-arrow-left-line me-1 align-middle"></i>Back to List
-                        </a>
-                        <button class="btn btn-success">Download <i
-                                class="ri-download-2-line ms-1 align-middle"></i></button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3">
-                <div class="card custom-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            Invoice Information
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row gy-3">
-                            <div class="col-xl-12">
-                                <p class="fs-14 fw-semibold">
-                                    Status
-                                </p>
-                                <p>
-                                    @php
-                                        $computedStatus = $invoice->getComputedStatus();
-                                        $badgeClass = match($computedStatus) {
-                                            \App\Enums\InvoiceStatus::DRAFT => 'warning',
-                                            \App\Enums\InvoiceStatus::SENT => 'info',
-                                            \App\Enums\InvoiceStatus::PAID => 'success',
-                                            \App\Enums\InvoiceStatus::OVERDUE => 'danger',
-                                        };
-                                    @endphp
-                                    <span class="badge bg-{{ $badgeClass }}-transparent">
-                                        {{ $computedStatus->label() }}
-                                    </span>
-                                </p>
-                                
-                                <p class="fs-14 fw-semibold mt-3">
-                                    Financial Details
-                                </p>
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Currency :</span> {{ $invoice->currency }}
-                                </p>
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Total Amount :</span> <span
-                                        class="text-success fw-semibold fs-14">{{ $invoice->currency }} {{ number_format($invoice->total_amount, 2) }}</span>
-                                </p>
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Issue Date :</span> {{ $invoice->issue_date->format('d M, Y') }}
-                                </p>
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Due Date :</span> {{ $invoice->due_date->format('d M, Y') }}
-                                    @if($invoice->isOverdue())
-                                        <span class="badge bg-danger-transparent ms-1">Overdue</span>
-                                    @endif
-                                </p>
-                                
-                                @if($invoice->paid_at)
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Paid At :</span> {{ $invoice->paid_at->format('d M, Y H:i') }}
-                                </p>
-                                @endif
-                                
-                                @if($invoice->sent_at)
-                                <p>
-                                    <span class="fw-semibold text-muted fs-12">Sent At :</span> {{ $invoice->sent_at->format('d M, Y H:i') }}
-                                </p>
-                                @endif
-                                
-                                <div class="alert alert-info mt-3" role="alert">
-                                    <strong>Public Link:</strong><br>
-                                    <small class="text-break">{{ url('/invoice/' . $invoice->public_token) }}</small>
+                                    <textarea class="form-control form-control-light" id="invoice-note" rows="3" readonly>{{ $invoice->notes ?? 'No notes available.' }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -300,7 +253,134 @@
         <!--End::row-1 -->
 
     </div>
+
+    <!-- Select Design Modal -->
+    <div class="modal fade" id="selectDesignModal" tabindex="-1" aria-labelledby="selectDesignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="selectDesignModalLabel">
+                        <i class="ri-palette-line me-2"></i>Select Invoice Design
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Choose a design template for your invoice PDF:</p>
+                    <div class="row g-3">
+                        <!-- Design 1 - Green -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="1">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e8f5f0 0%, #198754 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Classic Green</h6>
+                                    <small class="text-muted">Mint background, professional look</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Design 2 - Orange -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="2">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #fff3e0 0%, #d4882a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Warm Orange</h6>
+                                    <small class="text-muted">Sidebar layout, amber tones</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Design 3 - Red -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="3">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #fce4e4 0%, #a52a2a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Bold Crimson</h6>
+                                    <small class="text-muted">Pink header, red accents</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Design 4 - Blue -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="4">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e3f2fd 0%, #4a7c9b 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Steel Blue</h6>
+                                    <small class="text-muted">Clean modern, notes section</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Design 5 - Light Blue -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="5">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e8f4f8 0%, #4a8fa8 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Sky Blue</h6>
+                                    <small class="text-muted">Wave header, soft tones</small>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Design 6 - Purple/Default -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card design-card border" data-design="6">
+                                <div class="card-body text-center p-3">
+                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #f3f0ff 0%, #845adf 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ri-file-text-line fs-1 text-white"></i>
+                                    </div>
+                                    <h6 class="mb-1">Royal Purple</h6>
+                                    <small class="text-muted">Premium design, elegant</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <a href="#" id="generatePdfBtn" class="btn btn-primary disabled">
+                        <i class="ri-download-line me-1"></i> Generate PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const designCards = document.querySelectorAll('.design-card');
+        const generateBtn = document.getElementById('generatePdfBtn');
+        const baseUrl = "{{ route('invoice.download', $invoice) }}";
+        let selectedDesign = null;
+
+        designCards.forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', function() {
+                // Remove selection from all cards
+                designCards.forEach(c => {
+                    c.classList.remove('border-primary', 'shadow-sm');
+                    c.style.borderWidth = '1px';
+                });
+
+                // Add selection to clicked card
+                this.classList.add('border-primary', 'shadow-sm');
+                this.style.borderWidth = '2px';
+
+                // Get design number
+                selectedDesign = this.dataset.design;
+
+                // Enable and update generate button
+                generateBtn.classList.remove('disabled');
+                generateBtn.href = baseUrl + '?design=' + selectedDesign;
+            });
+        });
+    });
+</script>
 @endsection
