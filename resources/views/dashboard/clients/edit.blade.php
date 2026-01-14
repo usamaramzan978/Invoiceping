@@ -50,7 +50,7 @@
                         </div>
                     </div>
                     <div class="mt-4 d-flex justify-content-end gap-2">
-                        <a href="{{ route('clients.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ route('clients.index') }}" class="btn btn-light">Cancel</a>
                         <button type="submit" class="btn btn-primary">Update Client</button>
                     </div>
                 </form>

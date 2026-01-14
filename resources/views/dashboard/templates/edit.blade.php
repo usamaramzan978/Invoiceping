@@ -142,7 +142,7 @@
                         <div class="card-footer">
                             <div class="d-flex justify-content-between">
                                 <a href="{{ route('templates.index') }}" class="btn btn-light">
-                                    <i class="ri-close-line me-1"></i> Cancel
+                                    Cancel
                                 </a>
                                 <button type="submit" class="btn btn-primary">
                                     <i class="ri-save-line me-1"></i> Update Template
