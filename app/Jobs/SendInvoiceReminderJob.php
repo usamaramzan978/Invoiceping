@@ -104,11 +104,12 @@ final class SendInvoiceReminderJob implements ShouldQueue
             }
 
             // Get recipient based on channel
-            $recipient = $this->getRecipient($schedule->invoice, $schedule->channel->value);
+            $channelValue = $schedule->channel instanceof \App\Enums\MessageChannel ? $schedule->channel->value : (string) $schedule->channel;
+            $recipient = $this->getRecipient($schedule->invoice, $channelValue);
             $fromEmail = $this->getFromEmail($schedule->invoice);
 
             if ($recipient === null) {
-                throw new Exception('Recipient not found for channel: '.$schedule->channel->value);
+                throw new Exception('Recipient not found for channel: '.$channelValue);
             }
 
             // Get user ID from invoice business
@@ -117,7 +118,7 @@ final class SendInvoiceReminderJob implements ShouldQueue
 
             // Dispatch the actual sending job
             dispatch(new SendInvoiceMessageJob(
-                channel: $schedule->channel->value,
+                channel: $channelValue,
                 recipient: $recipient,
                 content: $processedContent,
                 userId: $userId,
@@ -136,7 +137,7 @@ final class SendInvoiceReminderJob implements ShouldQueue
 
             Log::info('Reminder scheduled and dispatched successfully', [
                 'schedule_id' => $schedule->id,
-                'channel' => $schedule->channel->value,
+                'channel' => $channelValue,
                 'recipient' => $recipient,
             ]);
         } catch (Exception $exception) {

@@ -25,8 +25,13 @@ final class InvoicePolicy
     {
         $invoice->loadMissing('business');
 
-        return $invoice->business
-            && $invoice->business->user_id === $user->id;
+        if (! $invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $invoice->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -45,8 +50,13 @@ final class InvoicePolicy
     {
         $invoice->loadMissing('business');
 
-        return $invoice->business
-            && $invoice->business->user_id === $user->id;
+        if (! $invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $invoice->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -56,7 +66,12 @@ final class InvoicePolicy
     {
         $invoice->loadMissing('business');
 
-        return $invoice->business
-            && $invoice->business->user_id === $user->id;
+        if (! $invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $invoice->business;
+        return $business->user_id === $user->id;
     }
 }

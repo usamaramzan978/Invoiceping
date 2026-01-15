@@ -25,8 +25,13 @@ final class ClientPolicy
     {
         $client->loadMissing('business');
 
-        return $client->business
-            && $client->business->user_id === $user->id;
+        if (! $client->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $client->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -45,8 +50,13 @@ final class ClientPolicy
     {
         $client->loadMissing('business');
 
-        return $client->business
-            && $client->business->user_id === $user->id;
+        if (! $client->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $client->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -56,7 +66,12 @@ final class ClientPolicy
     {
         $client->loadMissing('business');
 
-        return $client->business
-            && $client->business->user_id === $user->id;
+        if (! $client->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $client->business;
+        return $business->user_id === $user->id;
     }
 }

@@ -25,8 +25,11 @@ final class StoreManualScheduledRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->user()->id;
-        $businessId = $this->user()->business?->id;
+        $user = $this->user();
+        $userId = $user->id;
+        /** @var \App\Models\BusinessProfile|null $business */
+        $business = $user->business;
+        $businessId = $business?->id;
 
         return [
             // Required fields

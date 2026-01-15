@@ -32,10 +32,13 @@ final class RuleScheduledController extends Controller
         Gate::authorize('create', ReminderSchedule::class);
 
         $user = auth()->user();
+        /** @var \App\Models\BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
 
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $business;
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
             ->with('client')
@@ -87,6 +90,8 @@ final class RuleScheduledController extends Controller
 
         abort_unless($business, 404, 'Business profile not found');
 
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $business;
         abort_unless(
             $schedule->source_type->value === 'rule',
             404,

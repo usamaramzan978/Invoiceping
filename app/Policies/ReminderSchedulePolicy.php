@@ -25,9 +25,13 @@ final class ReminderSchedulePolicy
     {
         $reminderSchedule->loadMissing('invoice.business');
 
-        return $reminderSchedule->invoice
-            && $reminderSchedule->invoice->business
-            && $reminderSchedule->invoice->business->user_id === $user->id;
+        if (! $reminderSchedule->invoice || ! $reminderSchedule->invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $reminderSchedule->invoice->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -46,9 +50,13 @@ final class ReminderSchedulePolicy
     {
         $reminderSchedule->loadMissing('invoice.business');
 
-        return $reminderSchedule->invoice
-            && $reminderSchedule->invoice->business
-            && $reminderSchedule->invoice->business->user_id === $user->id;
+        if (! $reminderSchedule->invoice || ! $reminderSchedule->invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $reminderSchedule->invoice->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -58,9 +66,13 @@ final class ReminderSchedulePolicy
     {
         $reminderSchedule->loadMissing('invoice.business');
 
-        return $reminderSchedule->invoice
-            && $reminderSchedule->invoice->business
-            && $reminderSchedule->invoice->business->user_id === $user->id;
+        if (! $reminderSchedule->invoice || ! $reminderSchedule->invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $reminderSchedule->invoice->business;
+        return $business->user_id === $user->id;
     }
 
     /**
@@ -70,8 +82,12 @@ final class ReminderSchedulePolicy
     {
         $reminderSchedule->loadMissing('invoice.business');
 
-        return $reminderSchedule->invoice
-            && $reminderSchedule->invoice->business
-            && $reminderSchedule->invoice->business->user_id === $user->id;
+        if (! $reminderSchedule->invoice || ! $reminderSchedule->invoice->business) {
+            return false;
+        }
+
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $reminderSchedule->invoice->business;
+        return $business->user_id === $user->id;
     }
 }

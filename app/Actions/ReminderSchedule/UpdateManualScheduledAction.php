@@ -55,6 +55,8 @@ final readonly class UpdateManualScheduledAction
 
         throw_if(! $schedule->invoice || ! $schedule->invoice->business, InvalidArgumentException::class, 'Schedule invoice or business not found.');
 
-        throw_if($schedule->invoice->business->user_id !== $userId, InvalidArgumentException::class, 'You do not have permission to update this reminder schedule.');
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $schedule->invoice->business;
+        throw_if($business->user_id !== $userId, InvalidArgumentException::class, 'You do not have permission to update this reminder schedule.');
     }
 }

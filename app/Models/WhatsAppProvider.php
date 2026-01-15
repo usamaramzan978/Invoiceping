@@ -210,6 +210,8 @@ final class WhatsAppProvider extends Model
                 throw new Exception('User not found for encryption. User ID: '.($this->user_id ?? 'null'));
             }
 
+            /** @var \App\Models\User $user */
+            $user = $user;
             $encrypted = $service->encryptToken(
                 $value,
                 (string) $user->id, // User ID (UUID)
@@ -258,6 +260,8 @@ final class WhatsAppProvider extends Model
                 return null;
             }
 
+            /** @var \App\Models\User $user */
+            $user = $user;
             $decrypted = $service->decryptToken(
                 $encryptedValue,
                 (string) $user->id, // User ID (UUID)

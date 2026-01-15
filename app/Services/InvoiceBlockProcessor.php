@@ -193,6 +193,14 @@ final readonly class InvoiceBlockProcessor
                     </svg>
                 </div>
 
+                <h3 style="font-size: 18px; color: #111827; margin-bottom: 8px; font-weight: 600;">
+                    %s
+                </h3>
+
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">
+                    Your invoice is ready to download
+                </p>
+
                 <a href="%s" style="
                     display: inline-block;
                     padding: 12px 28px;
@@ -203,7 +211,7 @@ final readonly class InvoiceBlockProcessor
                     font-size: 14px;
                     font-weight: 500;
                 ">
-                    Download Invoice PDF
+                    %s
                 </a>
             </div>
             ',

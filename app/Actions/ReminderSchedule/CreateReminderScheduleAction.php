@@ -98,6 +98,7 @@ final readonly class CreateReminderScheduleAction
         ?string $bulkGroupId,
         string $userId
     ): int {
+        /** @var ReminderRule $rule */
         $rule = ReminderRule::query()
             ->where('user_id', $userId)
             ->with(['steps.templates.emailTemplate', 'steps.templates.messageTemplate'])
@@ -106,7 +107,9 @@ final readonly class CreateReminderScheduleAction
         $referenceDate = Date::parse($scheduledAt);
         $createdCount = 0;
 
-        foreach ($rule->steps as $step) {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReminderRuleStep> $steps */
+        $steps = $rule->steps;
+        foreach ($steps as $step) {
             $scheduledAtForStep = $this->calculateScheduledAt($referenceDate, $step);
 
             foreach ($step->templates as $template) {
@@ -160,7 +163,9 @@ final readonly class CreateReminderScheduleAction
 
         throw_unless($user->business, InvalidArgumentException::class, 'Business profile not found. Please create a business profile first.');
 
-        return $user->business->id;
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $user->business;
+        return (string) $business->id;
     }
 
     /**

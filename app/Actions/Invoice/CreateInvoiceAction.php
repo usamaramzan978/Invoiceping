@@ -14,6 +14,7 @@ final class CreateInvoiceAction
 {
     public function execute(BusinessProfile $business, array $data): Invoice
     {
+        /** @var Invoice */
         return DB::transaction(function () use ($business, $data) {
             // Calculate subtotal from items
             $subtotal = 0;
@@ -43,6 +44,7 @@ final class CreateInvoiceAction
             // Create invoice
             $status = $data['due_date'] < now() ? InvoiceStatus::OVERDUE : InvoiceStatus::DRAFT;
 
+            /** @var Invoice $invoice */
             $invoice = $business->invoices()->create([
                 'client_id' => $data['client_id'],
                 'invoice_number' => $data['invoice_number'],

@@ -42,7 +42,9 @@ final class InvoiceController extends Controller
                 ->with('success', 'Please create a business profile first.');
         }
 
-        $businessId = $user->business->id;
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $user->business;
+        $businessId = $business->id;
 
         $invoices = Invoice::with('client')
             ->where('business_id', $businessId)
@@ -143,6 +145,7 @@ final class InvoiceController extends Controller
         }
 
         // Get business information
+        /** @var \App\Models\BusinessProfile|null $business */
         $business = auth()->user()->business;
 
         // Prepare invoice data object for the view

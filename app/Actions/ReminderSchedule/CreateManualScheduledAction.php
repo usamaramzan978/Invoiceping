@@ -80,7 +80,9 @@ final readonly class CreateManualScheduledAction
 
         throw_unless($user->business, InvalidArgumentException::class, 'Business profile not found. Please create a business profile first.');
 
-        return $user->business->id;
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $user->business;
+        return (string) $business->id;
     }
 
     /**

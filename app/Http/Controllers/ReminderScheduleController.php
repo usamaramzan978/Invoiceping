@@ -40,6 +40,7 @@ final class ReminderScheduleController extends Controller
         Gate::authorize('viewAny', ReminderSchedule::class);
 
         $user = auth()->user();
+        /** @var \App\Models\BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
@@ -48,6 +49,8 @@ final class ReminderScheduleController extends Controller
          * Get ONE representative row per logical reminder group
          * Only show schedules for invoices belonging to user's business
          */
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $business;
         $subquery = ReminderSchedule::query()
             ->join('invoices', 'reminder_schedules.invoice_id', '=', 'invoices.id')
             ->where('invoices.business_id', $business->id)
@@ -127,10 +130,13 @@ final class ReminderScheduleController extends Controller
         Gate::authorize('create', ReminderSchedule::class);
 
         $user = auth()->user();
+        /** @var \App\Models\BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
 
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $business;
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
             ->latest()
@@ -197,10 +203,13 @@ final class ReminderScheduleController extends Controller
         Gate::authorize('update', $schedule);
 
         $user = auth()->user();
+        /** @var \App\Models\BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
 
+        /** @var \App\Models\BusinessProfile $business */
+        $business = $business;
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
             ->latest()

@@ -67,7 +67,8 @@ final class ReminderSchedule extends Model
 
     public function groupKey(): string
     {
-        $templateId = $this->channel === 'email'
+        $channelValue = $this->channel instanceof MessageChannel ? $this->channel->value : (string) $this->channel;
+        $templateId = $channelValue === 'email'
             ? ($this->email_template_id ?? 'none')
             : ($this->message_template_id ?? 'none');
 
@@ -75,7 +76,7 @@ final class ReminderSchedule extends Model
             $this->bulk_group_id ?? $this->id,
             $this->reminder_rule_step_id ?? 'none',
             $templateId,
-            $this->channel->value,
+            $channelValue,
         ]);
     }
 

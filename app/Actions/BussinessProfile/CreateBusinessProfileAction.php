@@ -19,6 +19,7 @@ final class CreateBusinessProfileAction
             $data['image'] = $imagePath;
         }
 
+        /** @var BusinessProfile $businessProfile */
         $businessProfile = $user->business()->create($data);
         $businessProfile->refresh();
 

@@ -28,7 +28,9 @@ final class ClientController extends Controller
     {
         Gate::authorize('viewAny', Client::class);
 
-        $businessId = auth()->user()->business?->id;
+        /** @var \App\Models\BusinessProfile|null $business */
+        $business = auth()->user()->business;
+        $businessId = $business?->id;
 
         $clients = Client::query()
             ->where('business_id', $businessId)
