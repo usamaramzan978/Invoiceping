@@ -268,9 +268,10 @@
                             </div>
                         </div>
                         <div class="card-footer text-end">
-                            <button type="button" id="preview-invoice-btn" class="btn btn-light me-1"><i
+                            <button type="button" id="preview-invoice-btn" class="btn btn-light me-1"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Preview Invoice"><i
                                     class="ri-eye-line me-1 align-middle d-inline-block"></i>Preview</button>
-                            <button class="btn btn-primary">Update Invoice <i
+                            <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Update Invoice">Update Invoice <i
                                     class="ri-save-line ms-1 align-middle d-inline-block"></i></button>
                         </div>
                     </form>
@@ -456,11 +457,11 @@
                         <td class="invoice-quantity-container">
                             <div class="input-group border rounded flex-nowrap">
                                 <button class="btn btn-icon btn-primary input-group-text flex-fill qty-minus"
-                                    type="button"><i class="ri-subtract-line"></i></button>
+                                    type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Decrease Quantity"><i class="ri-subtract-line"></i></button>
                                 <input type="text" class="form-control form-control-sm border-0 text-center product-qty"
                                     name="items[${itemId}][quantity]" value="${itemData.quantity}" min="1" required>
                                 <button class="btn btn-icon btn-primary input-group-text flex-fill qty-plus"
-                                    type="button"><i class="ri-add-line"></i></button>
+                                    type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Increase Quantity"><i class="ri-add-line"></i></button>
                             </div>
                         </td>
                         <td>
@@ -473,7 +474,7 @@
                         </td>
                         <td>
                             <button class="btn btn-sm btn-icon btn-danger-light remove-item" type="button"
-                                title="Delete Item"><i class="ri-delete-bin-5-line"></i></button>
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Item"><i class="ri-delete-bin-5-line"></i></button>
                         </td>
                     </tr>
                 `;
@@ -503,11 +504,11 @@
                         <td class="invoice-quantity-container">
                             <div class="input-group border rounded flex-nowrap">
                                 <button class="btn btn-icon btn-primary input-group-text flex-fill qty-minus"
-                                    type="button"><i class="ri-subtract-line"></i></button>
+                                    type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Decrease Quantity"><i class="ri-subtract-line"></i></button>
                                 <input type="text" class="form-control form-control-sm border-0 text-center product-qty"
                                     name="items[${itemId}][quantity]" value="1" min="1" required>
                                 <button class="btn btn-icon btn-primary input-group-text flex-fill qty-plus"
-                                    type="button"><i class="ri-add-line"></i></button>
+                                    type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Increase Quantity"><i class="ri-add-line"></i></button>
                             </div>
                         </td>
                         <td>
@@ -520,7 +521,7 @@
                         </td>
                         <td>
                             <button class="btn btn-sm btn-icon btn-danger-light remove-item" type="button"
-                                title="Delete Item"><i class="ri-delete-bin-5-line"></i></button>
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Item"><i class="ri-delete-bin-5-line"></i></button>
                         </td>
                     </tr>
                 `;

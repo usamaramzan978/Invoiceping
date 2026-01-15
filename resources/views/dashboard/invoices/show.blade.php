@@ -351,7 +351,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <a href="#" id="generatePdfBtn" class="btn btn-primary disabled">
+                    <a href="#" id="generatePdfBtn" class="btn btn-primary disabled"
+                        data-bs-toggle="tooltip" data-bs-placement="top" title="Generate Invoice PDF">
                         <i class="ri-download-line me-1"></i> Generate PDF
                     </a>
                 </div>

@@ -191,18 +191,18 @@
                                                     <div class="btn-list text-center">
                                                         <a href="{{ route('templates.edit', $template) }}"
                                                             class="btn btn-sm btn-icon btn-success-light"
-                                                            data-bs-toggle="tooltip" title="Edit">
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Template">
                                                             <i class="ri-pencil-line"></i>
                                                         </a>
                                                         <button type="button" class="btn btn-sm btn-icon btn-info-light"
                                                             data-bs-toggle="modal" data-bs-target="#previewModal"
                                                             onclick="showPreview('{{ $template->channel }}', '{{ $template->name }}', `{{ addslashes($template->content) }}`)"
-                                                            title="Preview">
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Preview Template">
                                                             <i class="ri-eye-line"></i>
                                                         </button>
                                                         <button type="button"
                                                             class="btn btn-sm btn-icon btn-danger-light"
-                                                            data-bs-toggle="tooltip" title="Delete" data-delete-modal
+                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Template" data-delete-modal
                                                             data-title="Delete Template"
                                                             data-message="Are you sure you want to delete '{{ $template->name }}'? This action cannot be undone."
                                                             data-form-id="{{ route('templates.destroy', $template->id) }}"

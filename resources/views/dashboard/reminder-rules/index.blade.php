@@ -74,7 +74,8 @@
                                             <td>
                                                 <div class="btn-list">
                                                     <a href="{{ route('reminder-rules.edit', $rule) }}"
-                                                        class="btn btn-success-light btn-icon btn-sm">
+                                                        class="btn btn-success-light btn-icon btn-sm"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Rule">
                                                         <i class="ri-pencil-line"></i>
                                                     </a>
                                                     <button type="button"
@@ -83,7 +84,8 @@
                                                         data-title="Delete Reminder Rule"
                                                         data-message="Are you sure you want to delete '{{ $rule->name }}'? This will also delete all associated steps and cannot be undone."
                                                         data-form-id="{{ route('reminder-rules.destroy', $rule) }}"
-                                                        data-record-name="reminder rule">
+                                                        data-record-name="reminder rule"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Rule">
                                                         <i class="ri-delete-bin-5-line"></i>
                                                     </button>
                                                 </div>

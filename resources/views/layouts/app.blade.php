@@ -150,6 +150,16 @@
     @vite('resources/js/app.js')
     @yield('scripts')
 
+    <!-- Initialize Bootstrap Tooltips -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
 
     <!-- CUSTOM-SWITCHER JS -->
     @vite('resources/assets/js/custom-switcher.js')

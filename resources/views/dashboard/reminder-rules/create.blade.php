@@ -56,7 +56,8 @@
                     <div class="card custom-card">
                         <div class="card-header justify-content-between">
                             <div class="card-title">Reminder Steps</div>
-                            <button type="button" class="btn btn-sm btn-secondary" id="add-step">
+                            <button type="button" class="btn btn-sm btn-secondary" id="add-step"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Add New Step">
                                 <i class="ri-add-line me-1"></i> Add Step
                             </button>
                         </div>
@@ -70,7 +71,8 @@
                                     <div class="card-header justify-content-between py-2">
                                         <div class="fw-semibold">Step #<span class="step-number">{{ $index + 1 }}</span>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-danger-light remove-step">
+                                        <button type="button" class="btn btn-sm btn-danger-light remove-step"
+                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Remove Step">
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </div>

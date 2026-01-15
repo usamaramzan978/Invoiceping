@@ -196,19 +196,22 @@
                                                     <div class="btn-list">
                                                         @if ($schedule->source_type->value === 'rule')
                                                             <a href="{{ route('rule-scheduled.edit', $schedule) }}"
-                                                                class="btn btn-primary-light btn-icon btn-sm">
+                                                                class="btn btn-primary-light btn-icon btn-sm"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Schedule">
                                                                 <i class="ri-pencil-line"></i>
                                                             </a>
                                                         @else
                                                             <a href="{{ route('manual-scheduled.edit', $schedule) }}"
-                                                                class="btn btn-primary-light btn-icon btn-sm">
+                                                                class="btn btn-primary-light btn-icon btn-sm"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Schedule">
                                                                 <i class="ri-pencil-line"></i>
                                                             </a>
                                                         @endif
                                                         <button type="button" class="btn btn-info-light btn-icon btn-sm"
                                                             data-bs-toggle="modal" data-bs-target="#rescheduleModal"
                                                             data-id="{{ $schedule->id }}"
-                                                            data-date="{{ $schedule->scheduled_at->format('Y-m-d\TH:i') }}">
+                                                            data-date="{{ $schedule->scheduled_at->format('Y-m-d\TH:i') }}"
+                                                            title="Reschedule">
                                                             <i class="ri-calendar-event-line"></i>
                                                         </button>
                                                         <form action="{{ route('schedule-reminders.cancel', $schedule) }}"
@@ -216,7 +219,8 @@
                                                             @csrf
                                                             <button type="submit"
                                                                 class="btn btn-danger-light btn-icon btn-sm"
-                                                                onclick="return confirm('Are you sure you want to cancel this reminder?')">
+                                                                onclick="return confirm('Are you sure you want to cancel this reminder?')"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Cancel Reminder">
                                                                 <i class="ri-close-circle-line"></i>
                                                             </button>
                                                         </form>

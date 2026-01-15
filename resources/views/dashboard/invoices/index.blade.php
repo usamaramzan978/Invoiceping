@@ -30,7 +30,8 @@
                         </div>
                         <div class="d-flex">
                             <a href="{{ route('invoices.create') }}" class="btn btn-sm btn-primary btn-wave waves-light">
-                                <i class="ri-add-line fw-semibold align-middle me-1"></i>
+                                <i class="ri-add-line fw-semibold align-middle me-1" data-bs-toggle="tooltip"
+                                    data-bs-placement="top" title="Create New Invoice"></i>
                                 Create Invoice</a>
                             <div class="dropdown ms-2">
                                 <button class="btn btn-icon btn-secondary-light btn-sm btn-wave waves-light" type="button"
@@ -135,16 +136,20 @@
                                             </td>
                                             <td>
                                                 <a href="{{ route('invoices.show', $invoice) }}"
-                                                    class="btn btn-info-light btn-icon btn-sm ms-1 invoice-btn">
+                                                    class="btn btn-info-light btn-icon btn-sm ms-1 invoice-btn"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="View Invoice">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
                                                 <a href="{{ route('invoices.edit', $invoice) }}"
-                                                    class="btn btn-success-light btn-icon btn-sm ms-1 invoice-btn">
+                                                    class="btn btn-success-light btn-icon btn-sm ms-1 invoice-btn"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Invoice">
                                                     <i class="ri-pencil-line"></i>
                                                 </a>
                                                 @if ($invoice->pdf_path)
                                                     <a href="{{ route('invoice.download', $invoice) }}"
-                                                        class="btn btn-secondary-light btn-icon btn-sm ms-1 invoice-btn">
+                                                        class="btn btn-secondary-light btn-icon btn-sm ms-1 invoice-btn"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                                        title="Download PDF">
                                                         <i class="ri-download-line"></i>
                                                     </a>
                                                 @endif
@@ -153,12 +158,13 @@
                                                     data-delete-modal data-title="Delete Invoice"
                                                     data-message="Are you sure you want to delete invoice #{{ $invoice->invoice_number }}? This action cannot be undone."
                                                     data-form-id="{{ route('invoices.destroy', $invoice) }}"
-                                                    data-record-name="invoice">
+                                                    data-record-name="invoice" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Delete Invoice">
                                                     <i class="ri-delete-bin-5-line"></i>
                                                 </button>
                                                 <button type="button" class="btn btn-primary btn-sm ms-1 send-invoice-btn"
                                                     data-invoice-id="{{ $invoice->id }}" data-bs-toggle="modal"
-                                                    data-bs-target="#sendInvoiceModal">
+                                                    data-bs-target="#sendInvoiceModal" title="Send Invoice">
                                                     <i class="ri-send-plane-2-line"></i> Send Invoice
                                                 </button>
                                             </td>
