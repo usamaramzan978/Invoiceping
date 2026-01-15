@@ -51,6 +51,7 @@ final class StoreReminderScheduleRequest extends FormRequest
                 'integer',
                 Rule::exists('email_templates', 'id')->where('user_id', $userId)->where('is_active', true),
             ],
+            'include_pdf' => ['sometimes', 'boolean'],
             'message_template_id' => [
                 'nullable',
                 Rule::requiredIf(fn (): bool => $this->input('source_type') === 'manual'

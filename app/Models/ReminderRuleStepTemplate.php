@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string $reminder_rule_step_id
  * @property string|null $message_template_id
  * @property int|null $email_template_id
+ * @property bool $include_pdf
  * @property string $channel
  * @property Carbon $created_at
  * @property Carbon $updated_at
@@ -36,6 +37,7 @@ final class ReminderRuleStepTemplate extends Model
         'reminder_rule_step_id',
         'message_template_id',
         'email_template_id',
+        'include_pdf',
         'channel',
     ];
 
@@ -92,4 +94,8 @@ final class ReminderRuleStepTemplate extends Model
     {
         return $this->channel === 'sms';
     }
+
+    protected $casts = [
+        'include_pdf' => 'boolean',
+    ];
 }

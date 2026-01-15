@@ -105,8 +105,9 @@
                                                                     ->map(
                                                                         fn($t) => [
                                                                             'channel' => $t->channel,
-                                                                            'message_template_id' =>
-                                                                                $t->message_template_id,
+                                                                            'email_template_id' => $t->email_template_id,
+                                                                            'message_template_id' => $t->message_template_id,
+                                                                            'include_pdf' => $t->include_pdf ?? false,
                                                                         ],
                                                                     )
                                                                     ->toArray()
@@ -114,10 +115,9 @@
                                                     @endphp
                                                     {{-- Email Template (from email_templates table) --}}
                                                     @php
-                                                        $selectedEmailTemplate =
-                                                            collect($channels)->firstWhere('channel', 'email')[
-                                                                'email_template_id'
-                                                            ] ?? null;
+                                                        $emailChannelData = collect($channels)->firstWhere('channel', 'email');
+                                                        $selectedEmailTemplate = $emailChannelData['email_template_id'] ?? null;
+                                                        $includePdfValue = $emailChannelData['include_pdf'] ?? false;
                                                     @endphp
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text" style="width: 100px;">📧 Email</span>
@@ -126,7 +126,8 @@
                                                             value="email">
                                                         <select
                                                             name="steps[{{ $index }}][channels][email][email_template_id]"
-                                                            class="form-select select2-single">
+                                                            class="form-select select2-single email-template-select-rule"
+                                                            data-step-index="{{ $index }}">
                                                             <option value="">Select Template</option>
                                                             @foreach ($emailTemplates as $template)
                                                                 <option value="{{ $template->id }}"
@@ -135,6 +136,22 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                    </div>
+                                                    <div class="include-pdf-section-rule-{{ $index }} mb-2" style="display: none;">
+                                                        <div class="form-check ms-4">
+                                                            <input class="form-check-input" type="checkbox" 
+                                                                name="steps[{{ $index }}][channels][email][include_pdf]" 
+                                                                id="include-pdf-rule-{{ $index }}" 
+                                                                value="1" 
+                                                                {{ $includePdfValue ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="include-pdf-rule-{{ $index }}">
+                                                                <strong>Include Invoice PDF</strong>
+                                                                <small class="d-block text-muted mt-1">
+                                                                    <i class="ri-information-line me-1"></i>
+                                                                    Attach invoice PDF if the selected email template contains an invoice block
+                                                                </small>
+                                                            </label>
+                                                        </div>
                                                     </div>
 
                                                     {{-- WhatsApp Template (from message_templates table) --}}
@@ -239,12 +256,29 @@
                                 <span class="input-group-text" style="width: 100px;">📧 Email</span>
                                 <input type="hidden" name="steps[__INDEX__][channels][email][channel]" value="email">
                                 <select name="steps[__INDEX__][channels][email][email_template_id]"
-                                    class="form-select select2-single">
+                                    class="form-select select2-single email-template-select-rule"
+                                    data-step-index="__INDEX__">
                                     <option value="">Select Template</option>
                                     @foreach ($emailTemplates as $template)
                                         <option value="{{ $template->id }}">{{ $template->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="include-pdf-section-rule-__INDEX__ mb-2" style="display: none;">
+                                <div class="form-check ms-4">
+                                    <input class="form-check-input" type="checkbox" 
+                                        name="steps[__INDEX__][channels][email][include_pdf]" 
+                                        id="include-pdf-rule-__INDEX__" 
+                                        value="1" 
+                                        checked>
+                                    <label class="form-check-label" for="include-pdf-rule-__INDEX__">
+                                        <strong>Include Invoice PDF</strong>
+                                        <small class="d-block text-muted mt-1">
+                                            <i class="ri-information-line me-1"></i>
+                                            Attach invoice PDF if the selected email template contains an invoice block
+                                        </small>
+                                    </label>
+                                </div>
                             </div>
                             {{-- WhatsApp --}}
                             <div class="input-group mb-2">
@@ -281,6 +315,57 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Store email templates data for InvoiceBlock detection
+            const EMAIL_TEMPLATES_DATA = @json($emailTemplatesJson ?? []);
+
+            // Function to recursively check for InvoiceBlock in template JSON
+            function checkForInvoiceBlock(data) {
+                if (!data || typeof data !== 'object') return false;
+
+                // Check if this is an InvoiceBlock
+                if (data.type === 'InvoiceBlock') return true;
+
+                // Recursively check all values
+                for (let key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        if (checkForInvoiceBlock(data[key])) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            // Function to update PDF checkbox visibility for a specific step
+            function updatePdfCheckboxVisibilityRule(stepIndex) {
+                const pdfSection = document.querySelector(`.include-pdf-section-rule-${stepIndex}`);
+                if (!pdfSection) return;
+
+                const emailSelect = document.querySelector(`select.email-template-select-rule[data-step-index="${stepIndex}"]`);
+                if (!emailSelect) return;
+
+                const templateId = emailSelect.value;
+                if (!templateId) {
+                    pdfSection.style.display = 'none';
+                    return;
+                }
+
+                const template = EMAIL_TEMPLATES_DATA.find(t => t.id == templateId);
+                if (template && template.template_json) {
+                    try {
+                        const templateJson = typeof template.template_json === 'string' ?
+                            JSON.parse(template.template_json) :
+                            template.template_json;
+                        const hasInvoiceBlock = checkForInvoiceBlock(templateJson);
+                        pdfSection.style.display = hasInvoiceBlock ? 'block' : 'none';
+                    } catch (e) {
+                        console.error('Error parsing template JSON:', e);
+                        pdfSection.style.display = 'none';
+                    }
+                } else {
+                    pdfSection.style.display = 'none';
+                }
+            }
+
             // Initialize Select2
             $('.select2-single').select2();
 
@@ -306,6 +391,14 @@
 
                 // Reinitialize Select2 for the new step
                 $(container.lastElementChild).find('.select2-single').select2();
+
+                // Add event listener for email template selection
+                const emailSelect = container.lastElementChild.querySelector(`select.email-template-select-rule[data-step-index="${index}"]`);
+                if (emailSelect) {
+                    $(emailSelect).on('select2:select', function() {
+                        updatePdfCheckboxVisibilityRule(index);
+                    });
+                }
             });
 
             container.addEventListener('click', function(e) {
@@ -319,6 +412,16 @@
             if (container.querySelectorAll('.step-item').length === 0) {
                 addButton.click();
             }
+
+            // Add event listeners for existing email template selects
+            container.querySelectorAll('.email-template-select-rule').forEach(select => {
+                const stepIndex = select.getAttribute('data-step-index');
+                $(select).on('select2:select', function() {
+                    updatePdfCheckboxVisibilityRule(stepIndex);
+                });
+                // Check on initial load
+                updatePdfCheckboxVisibilityRule(stepIndex);
+            });
         });
     </script>
 @endsection

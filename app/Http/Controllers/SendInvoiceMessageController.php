@@ -29,6 +29,8 @@ final readonly class SendInvoiceMessageController
             'selected_template.email' => ['nullable', 'integer', 'exists:email_templates,id'],
             'selected_template.whatsapp' => ['nullable', 'uuid', 'exists:message_templates,id'],
             'selected_template.sms' => ['nullable', 'uuid', 'exists:message_templates,id'],
+            'include_pdf_email' => ['sometimes', 'boolean', 'in:0,1,true,false'],
+            'include_pdf_whatsapp' => ['sometimes', 'boolean', 'in:0,1,true,false'],
         ]);
 
         $userId = Auth::id();

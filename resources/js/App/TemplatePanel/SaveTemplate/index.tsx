@@ -82,8 +82,26 @@ export default function SaveTemplate() {
         setSaving(true);
 
         try {
+            // Replace InvoiceBlock with Html block for rendering (renderToStaticMarkup doesn't support custom blocks)
+            const documentForRendering = { ...document };
+            Object.keys(documentForRendering).forEach((blockId) => {
+                const block = documentForRendering[blockId];
+                if (block?.type === 'InvoiceBlock') {
+                    // Replace InvoiceBlock with Html block containing placeholder
+                    documentForRendering[blockId] = {
+                        type: 'Html',
+                        data: {
+                            props: {
+                                contents: '<div style="padding: 16px; background-color: #f8f9fa; border: 1px dashed #ccc; border-radius: 4px; text-align: center; color: #666; font-size: 14px;">[Invoice PDF will be inserted here when email is sent]</div>',
+                            },
+                            style: block.data?.style || {},
+                        },
+                    };
+                }
+            });
+
             // Generate HTML from the email builder document
-            const htmlContent = renderToStaticMarkup(document, { rootBlockId: 'root' });
+            const htmlContent = renderToStaticMarkup(documentForRendering, { rootBlockId: 'root' });
 
             // Prepare the template data
             const templateData = {

@@ -53,9 +53,19 @@ final class ManualScheduledController extends Controller
             ->where('is_active', true)
             ->get();
 
+        // Pass email templates with template_json for JavaScript InvoiceBlock detection
+        $emailTemplatesWithJson = $emailTemplates->map(function ($template) {
+            return [
+                'id' => $template->id,
+                'name' => $template->name,
+                'template_json' => $template->template_json,
+            ];
+        });
+
         return view('dashboard.manual-scheduled.create', [
             'invoices' => $invoices,
             'emailTemplates' => $emailTemplates,
+            'emailTemplatesJson' => $emailTemplatesWithJson, // For JavaScript
             'messageTemplates' => $messageTemplates,
         ]);
     }
@@ -124,10 +134,20 @@ final class ManualScheduledController extends Controller
                 ->get()
             : collect([$schedule]);
 
+        // Pass email templates with template_json for JavaScript InvoiceBlock detection
+        $emailTemplatesWithJson = $emailTemplates->map(function ($template) {
+            return [
+                'id' => $template->id,
+                'name' => $template->name,
+                'template_json' => $template->template_json,
+            ];
+        });
+
         return view('dashboard.manual-scheduled.edit', [
             'schedule' => $schedule,
             'invoices' => $invoices,
             'emailTemplates' => $emailTemplates,
+            'emailTemplatesJson' => $emailTemplatesWithJson, // For JavaScript
             'messageTemplates' => $messageTemplates,
             'relatedSchedules' => $relatedSchedules,
         ]);

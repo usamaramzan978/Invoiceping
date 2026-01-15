@@ -42,7 +42,8 @@
                             <button class="btn btn-sm btn-secondary me-1" onclick="javascript:window.print();">Print
                                 <i class="ri-printer-line ms-1 align-middle d-inline-block"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#selectDesignModal">
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#selectDesignModal">
                                 Generate PDF
                                 <i class="ri-file-pdf-line ms-1 align-middle d-inline-block"></i>
                             </button>
@@ -133,26 +134,26 @@
                                                     $itemTotal = $item->quantity * $item->unit_price;
                                                     $subtotal += $itemTotal;
                                                 @endphp
-                                            <tr>
-                                                <td>
+                                                <tr>
+                                                    <td>
                                                         <div class="fw-semibold">{{ $item->name }}</div>
-                                                </td>
-                                                <td>
+                                                    </td>
+                                                    <td>
                                                         <div class="text-muted">{{ $item->description ?? '—' }}</div>
-                                                </td>
+                                                    </td>
                                                     <td class="product-quantity-container">
                                                         {{ number_format($item->quantity, 2) }}</td>
                                                     <td>{{ $currencySymbol }}{{ number_format($item->unit_price, 2) }}
-                                                </td>
+                                                    </td>
                                                     <td>{{ $currencySymbol }}{{ number_format($itemTotal, 2) }}</td>
-                                            </tr>
+                                                </tr>
                                             @empty
-                                            <tr>
+                                                <tr>
                                                     <td colspan="5" class="text-center text-muted py-4">
                                                         <i class="ri-inbox-line fs-24 d-block mb-2"></i>
                                                         No items found.
-                                                </td>
-                                            </tr>
+                                                    </td>
+                                                </tr>
                                             @endforelse
                                             <tr>
                                                 <td colspan="3"></td>
@@ -192,34 +193,34 @@
                                                                 </td>
                                                             </tr>
                                                             @if ($discountAmount > 0)
-                                                            <tr>
-                                                                <th scope="row">
+                                                                <tr>
+                                                                    <th scope="row">
                                                                         <p class="mb-0">Discount @if ($discountPercent > 0)
                                                                                 <span
                                                                                     class="text-success">({{ number_format($discountPercent, 1) }}%)</span>
                                                                             @endif :</p>
-                                                                </th>
-                                                                <td>
+                                                                    </th>
+                                                                    <td>
                                                                         <p class="mb-0 fw-semibold fs-15 text-danger">
                                                                             -{{ $currencySymbol }}{{ number_format($discountAmount, 2) }}
                                                                         </p>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                </tr>
                                                             @endif
                                                             @if ($taxAmount > 0)
-                                                            <tr>
-                                                                <th scope="row">
+                                                                <tr>
+                                                                    <th scope="row">
                                                                         <p class="mb-0">Tax @if ($taxPercent > 0)
                                                                                 <span
                                                                                     class="text-danger">({{ number_format($taxPercent, 1) }}%)</span>
                                                                             @endif :</p>
-                                                                </th>
-                                                                <td>
+                                                                    </th>
+                                                                    <td>
                                                                         <p class="mb-0 fw-semibold fs-15">
                                                                             {{ $currencySymbol }}{{ number_format($taxAmount, 2) }}
                                                                         </p>
-                                                                </td>
-                                                            </tr>
+                                                                    </td>
+                                                                </tr>
                                                             @endif
                                                             <tr>
                                                                 <th scope="row">
@@ -255,7 +256,8 @@
     </div>
 
     <!-- Select Design Modal -->
-    <div class="modal fade" id="selectDesignModal" tabindex="-1" aria-labelledby="selectDesignModalLabel" aria-hidden="true">
+    <div class="modal fade" id="selectDesignModal" tabindex="-1" aria-labelledby="selectDesignModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -271,7 +273,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="1">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e8f5f0 0%, #198754 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #e8f5f0 0%, #198754 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Classic Green</h6>
@@ -283,7 +286,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="2">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #fff3e0 0%, #d4882a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #fff3e0 0%, #d4882a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Warm Orange</h6>
@@ -295,7 +299,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="3">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #fce4e4 0%, #a52a2a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #fce4e4 0%, #a52a2a 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Bold Crimson</h6>
@@ -307,7 +312,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="4">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e3f2fd 0%, #4a7c9b 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #e3f2fd 0%, #4a7c9b 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Steel Blue</h6>
@@ -319,7 +325,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="5">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #e8f4f8 0%, #4a8fa8 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #e8f4f8 0%, #4a8fa8 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Sky Blue</h6>
@@ -331,7 +338,8 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="card design-card border" data-design="6">
                                 <div class="card-body text-center p-3">
-                                    <div class="design-preview mb-2" style="background: linear-gradient(135deg, #f3f0ff 0%, #845adf 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <div class="design-preview mb-2"
+                                        style="background: linear-gradient(135deg, #f3f0ff 0%, #845adf 100%); height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                                         <i class="ri-file-text-line fs-1 text-white"></i>
                                     </div>
                                     <h6 class="mb-1">Royal Purple</h6>
@@ -353,34 +361,34 @@
 @endsection
 
 @section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const designCards = document.querySelectorAll('.design-card');
-        const generateBtn = document.getElementById('generatePdfBtn');
-        const baseUrl = "{{ route('invoice.download', $invoice) }}";
-        let selectedDesign = null;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const designCards = document.querySelectorAll('.design-card');
+            const generateBtn = document.getElementById('generatePdfBtn');
+            const baseUrl = "{{ route('invoice.download', $invoice) }}";
+            let selectedDesign = null;
 
-        designCards.forEach(card => {
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', function() {
-                // Remove selection from all cards
-                designCards.forEach(c => {
-                    c.classList.remove('border-primary', 'shadow-sm');
-                    c.style.borderWidth = '1px';
+            designCards.forEach(card => {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function() {
+                    // Remove selection from all cards
+                    designCards.forEach(c => {
+                        c.classList.remove('border-primary', 'shadow-sm');
+                        c.style.borderWidth = '1px';
+                    });
+
+                    // Add selection to clicked card
+                    this.classList.add('border-primary', 'shadow-sm');
+                    this.style.borderWidth = '2px';
+
+                    // Get design number
+                    selectedDesign = this.dataset.design;
+
+                    // Enable and update generate button
+                    generateBtn.classList.remove('disabled');
+                    generateBtn.href = baseUrl + '?design=' + selectedDesign;
                 });
-
-                // Add selection to clicked card
-                this.classList.add('border-primary', 'shadow-sm');
-                this.style.borderWidth = '2px';
-
-                // Get design number
-                selectedDesign = this.dataset.design;
-
-                // Enable and update generate button
-                generateBtn.classList.remove('disabled');
-                generateBtn.href = baseUrl + '?design=' + selectedDesign;
             });
         });
-    });
-</script>
+    </script>
 @endsection

@@ -21,6 +21,8 @@ import ContainerEditor from '../blocks/Container/ContainerEditor';
 import ContainerPropsSchema from '../blocks/Container/ContainerPropsSchema';
 import EmailLayoutEditor from '../blocks/EmailLayout/EmailLayoutEditor';
 import EmailLayoutPropsSchema from '../blocks/EmailLayout/EmailLayoutPropsSchema';
+import InvoiceBlockEditor from '../blocks/InvoiceBlock/InvoiceBlockEditor';
+import InvoiceBlockPropsSchema from '../blocks/InvoiceBlock/InvoiceBlockPropsSchema';
 import EditorBlockWrapper from '../blocks/helpers/block-wrappers/EditorBlockWrapper';
 
 const EDITOR_DICTIONARY = buildBlockConfigurationDictionary({
@@ -116,6 +118,10 @@ const EDITOR_DICTIONARY = buildBlockConfigurationDictionary({
         <Divider {...props} />
       </EditorBlockWrapper>
     ),
+  },
+  InvoiceBlock: {
+    schema: InvoiceBlockPropsSchema,
+    Component: (props) => <InvoiceBlockEditor {...props} />,
   },
 });
 

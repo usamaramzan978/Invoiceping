@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $reminder_rule_step_id
  * @property string|null $message_template_id
  * @property int|null $email_template_id
+ * @property bool $include_pdf
  * @property string $channel
  * @property Carbon $scheduled_at
  * @property ReminderStatusEnum $status
@@ -45,6 +46,7 @@ final class ReminderSchedule extends Model
         'reminder_rule_step_id',
         'message_template_id',
         'email_template_id',
+        'include_pdf',
         'channel',
         'scheduled_at',
         'status',
@@ -60,6 +62,7 @@ final class ReminderSchedule extends Model
         'status' => ReminderStatusEnum::class,
         'channel' => MessageChannel::class,
         'source_type' => ReminderSourceTypeEnum::class,
+        'include_pdf' => 'boolean',
     ];
 
     public function groupKey(): string

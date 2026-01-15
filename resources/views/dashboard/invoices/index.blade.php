@@ -341,6 +341,32 @@
                         Select a template for each channel, or leave empty to use the default.
                     </div>
                     <div id="template-grid-area"></div>
+                    <div id="include-pdf-section-email" class="mt-3" style="display: none;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_pdf_email"
+                                id="include-pdf-checkbox-email" value="1" checked>
+                            <label class="form-check-label" for="include-pdf-checkbox-email">
+                                <strong>Include Invoice PDF (Email)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    <i class="ri-information-line me-1"></i>
+                                    Attach invoice PDF if the selected email template contains an invoice block
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="include-pdf-section-whatsapp" class="mt-3" style="display: none;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_pdf_whatsapp"
+                                id="include-pdf-checkbox-whatsapp" value="1" checked>
+                            <label class="form-check-label" for="include-pdf-checkbox-whatsapp">
+                                <strong>Include Invoice PDF (WhatsApp)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    <i class="ri-information-line me-1"></i>
+                                    Attach invoice PDF as document in WhatsApp message
+                                </small>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -436,6 +462,85 @@
             html += `</div>`;
             gridArea.innerHTML += html;
         });
+        // Function to recursively check for InvoiceBlock in template JSON
+        function checkForInvoiceBlock(data) {
+            if (!data || typeof data !== 'object') return false;
+
+            // Check if this is an InvoiceBlock
+            if (data.type === 'InvoiceBlock') return true;
+
+            // Recursively check all values
+            for (let key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (checkForInvoiceBlock(data[key])) return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Function to update PDF checkbox visibility based on selected channels and templates
+        function updatePdfCheckboxVisibility() {
+            // Handle Email PDF checkbox
+            const emailPdfSection = document.getElementById('include-pdf-section-email');
+            if (emailPdfSection) {
+                const emailChannelChecked = document.getElementById('channel-email')?.checked;
+                if (!emailChannelChecked) {
+                    emailPdfSection.style.display = 'none';
+                } else {
+                    // Find selected email template
+                    const emailTemplateInput = document.querySelector('input[name="selected_template[email]"]');
+                    if (!emailTemplateInput || !emailTemplateInput.value) {
+                        // No template selected, check if any email template has InvoiceBlock
+                        const emailTemplates = SEND_TEMPLATES.filter(t => t.channel === 'email');
+                        let hasAnyInvoiceBlock = false;
+                        for (let template of emailTemplates) {
+                            if (template.template_json) {
+                                try {
+                                    const templateJson = typeof template.template_json === 'string' ?
+                                        JSON.parse(template.template_json) :
+                                        template.template_json;
+                                    if (checkForInvoiceBlock(templateJson)) {
+                                        hasAnyInvoiceBlock = true;
+                                        break;
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing template JSON:', e);
+                                }
+                            }
+                        }
+                        emailPdfSection.style.display = hasAnyInvoiceBlock ? 'block' : 'none';
+                    } else {
+                        // Check selected template
+                        const templateId = emailTemplateInput.value;
+                        const template = SEND_TEMPLATES.find(t => t.id == templateId && t.channel === 'email');
+
+                        if (template && template.template_json) {
+                            try {
+                                const templateJson = typeof template.template_json === 'string' ?
+                                    JSON.parse(template.template_json) :
+                                    template.template_json;
+                                const hasInvoiceBlock = checkForInvoiceBlock(templateJson);
+                                emailPdfSection.style.display = hasInvoiceBlock ? 'block' : 'none';
+                            } catch (e) {
+                                console.error('Error parsing template JSON:', e);
+                                emailPdfSection.style.display = 'none';
+                            }
+                        } else {
+                            emailPdfSection.style.display = 'none';
+                        }
+                    }
+                }
+            }
+
+            // Handle WhatsApp PDF checkbox
+            const whatsappPdfSection = document.getElementById('include-pdf-section-whatsapp');
+            if (whatsappPdfSection) {
+                const whatsappChannelChecked = document.getElementById('channel-whatsapp')?.checked;
+                whatsappPdfSection.style.display = whatsappChannelChecked ? 'block' : 'none';
+            }
+        }
+
         // Add click handler to select template
         document.querySelectorAll('.template-card').forEach(card => {
             card.onclick = function() {
@@ -453,6 +558,9 @@
                     card.closest('form').appendChild(input);
                 }
                 input.value = card.getAttribute('data-template-id');
+
+                // Update PDF checkbox visibility
+                updatePdfCheckboxVisibility();
             };
         });
     }
@@ -471,8 +579,15 @@
     // Update grid on channel checkbox change
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.channel-checkbox').forEach(cb => {
-            cb.addEventListener('change', updateTemplateGrid);
+            cb.addEventListener('change', function() {
+                updateTemplateGrid();
+                // Update PDF checkbox visibility when channels change
+                setTimeout(updatePdfCheckboxVisibility, 100);
+            });
         });
+
+        // Also check on initial load if email is already selected
+        setTimeout(updatePdfCheckboxVisibility, 200);
     });
 </script>
 

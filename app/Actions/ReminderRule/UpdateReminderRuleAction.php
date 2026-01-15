@@ -52,6 +52,7 @@ final class UpdateReminderRuleAction
                     // Handle email templates
                     if ($channelData['channel'] === 'email' && !empty($channelData['email_template_id'])) {
                         $templateData['email_template_id'] = $channelData['email_template_id'];
+                        $templateData['include_pdf'] = (bool) ($channelData['include_pdf'] ?? false);
                         ReminderRuleStepTemplate::query()->create($templateData);
                     }
                     // Handle WhatsApp/SMS templates

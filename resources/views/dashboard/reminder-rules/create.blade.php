@@ -126,7 +126,8 @@
                                                             value="email">
                                                         <select
                                                             name="steps[{{ $index }}][channels][email][email_template_id]"
-                                                            class="form-select select2-single">
+                                                            class="form-select select2-single email-template-select-rule"
+                                                            data-step-index="{{ $index }}">
                                                             <option value="">Select Template</option>
                                                             @foreach ($emailTemplates as $template)
                                                                 <option value="{{ $template->id }}"
@@ -136,6 +137,31 @@
                                                             @endforeach
                                                         </select>
                                                     </div>
+                                                    @php
+                                                        $emailChannelData = collect($channels)->firstWhere(
+                                                            'channel',
+                                                            'email',
+                                                        );
+                                                        $includePdfValue = $emailChannelData['include_pdf'] ?? false;
+                                                    @endphp
+                                                    <div class="include-pdf-section-rule-{{ $index }} mb-2"
+                                                        style="display: none;">
+                                                        <div class="form-check ms-4">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="steps[{{ $index }}][channels][email][include_pdf]"
+                                                                id="include-pdf-rule-{{ $index }}" value="1"
+                                                                {{ $includePdfValue ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="include-pdf-rule-{{ $index }}">
+                                                                <strong>Include Invoice PDF</strong>
+                                                                <small class="d-block text-muted mt-1">
+                                                                    <i class="ri-information-line me-1"></i>
+                                                                    Attach invoice PDF if the selected email template
+                                                                    contains an invoice block
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
 
                                                     {{-- WhatsApp Template (from message_templates table) --}}
                                                     @php
@@ -143,6 +169,11 @@
                                                             collect($channels)->firstWhere('channel', 'whatsapp')[
                                                                 'message_template_id'
                                                             ] ?? null;
+                                                        $whatsappChannelData = collect($channels)->firstWhere(
+                                                            'channel',
+                                                            'whatsapp',
+                                                        );
+                                                        $includePdfWhatsappValue = $whatsappChannelData['include_pdf'] ?? false;
                                                     @endphp
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text" style="width: 100px;">📱
@@ -152,7 +183,8 @@
                                                             value="whatsapp">
                                                         <select
                                                             name="steps[{{ $index }}][channels][whatsapp][message_template_id]"
-                                                            class="form-select select2-single">
+                                                            class="form-select select2-single whatsapp-template-select-rule"
+                                                            data-step-index="{{ $index }}">
                                                             <option value="">Select Template</option>
                                                             @foreach ($messageTemplates->where('channel', 'whatsapp') as $template)
                                                                 <option value="{{ $template->id }}"
@@ -161,6 +193,23 @@
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                    </div>
+                                                    <div class="include-pdf-section-rule-whatsapp-{{ $index }} mb-2"
+                                                        style="display: none;">
+                                                        <div class="form-check ms-4">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="steps[{{ $index }}][channels][whatsapp][include_pdf]"
+                                                                id="include-pdf-rule-whatsapp-{{ $index }}" value="1"
+                                                                {{ $includePdfWhatsappValue ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="include-pdf-rule-whatsapp-{{ $index }}">
+                                                                <strong>Include Invoice PDF (WhatsApp)</strong>
+                                                                <small class="d-block text-muted mt-1">
+                                                                    <i class="ri-information-line me-1"></i>
+                                                                    Attach invoice PDF as document in WhatsApp message
+                                                                </small>
+                                                            </label>
+                                                        </div>
                                                     </div>
 
                                                     {{-- SMS Template (from message_templates table) --}}
@@ -239,12 +288,27 @@
                                 <span class="input-group-text" style="width: 100px;">📧 Email</span>
                                 <input type="hidden" name="steps[__INDEX__][channels][email][channel]" value="email">
                                 <select name="steps[__INDEX__][channels][email][email_template_id]"
-                                    class="form-select select2-single">
+                                    class="form-select select2-single email-template-select-rule"
+                                    data-step-index="__INDEX__">
                                     <option value="">Select Template</option>
                                     @foreach ($emailTemplates as $template)
                                         <option value="{{ $template->id }}">{{ $template->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="include-pdf-section-rule-__INDEX__ mb-2" style="display: none;">
+                                <div class="form-check ms-4">
+                                    <input class="form-check-input" type="checkbox"
+                                        name="steps[__INDEX__][channels][email][include_pdf]"
+                                        id="include-pdf-rule-__INDEX__" value="1" checked>
+                                    <label class="form-check-label" for="include-pdf-rule-__INDEX__">
+                                        <strong>Include Invoice PDF</strong>
+                                        <small class="d-block text-muted mt-1">
+                                            <i class="ri-information-line me-1"></i>
+                                            Attach invoice PDF if the selected email template contains an invoice block
+                                        </small>
+                                    </label>
+                                </div>
                             </div>
                             {{-- WhatsApp --}}
                             <div class="input-group mb-2">
@@ -252,12 +316,27 @@
                                 <input type="hidden" name="steps[__INDEX__][channels][whatsapp][channel]"
                                     value="whatsapp">
                                 <select name="steps[__INDEX__][channels][whatsapp][message_template_id]"
-                                    class="form-select select2-single">
+                                    class="form-select select2-single whatsapp-template-select-rule"
+                                    data-step-index="__INDEX__">
                                     <option value="">Select Template</option>
                                     @foreach ($messageTemplates->where('channel', 'whatsapp') as $template)
                                         <option value="{{ $template->id }}">{{ $template->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="include-pdf-section-rule-whatsapp-__INDEX__ mb-2" style="display: none;">
+                                <div class="form-check ms-4">
+                                    <input class="form-check-input" type="checkbox"
+                                        name="steps[__INDEX__][channels][whatsapp][include_pdf]"
+                                        id="include-pdf-rule-whatsapp-__INDEX__" value="1" checked>
+                                    <label class="form-check-label" for="include-pdf-rule-whatsapp-__INDEX__">
+                                        <strong>Include Invoice PDF (WhatsApp)</strong>
+                                        <small class="d-block text-muted mt-1">
+                                            <i class="ri-information-line me-1"></i>
+                                            Attach invoice PDF as document in WhatsApp message
+                                        </small>
+                                    </label>
+                                </div>
                             </div>
                             {{-- SMS --}}
                             {{-- <div class="input-group mb-2">
@@ -281,6 +360,70 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            // Store email templates data for InvoiceBlock detection
+            const EMAIL_TEMPLATES_DATA = @json($emailTemplatesJson ?? []);
+
+            // Function to recursively check for InvoiceBlock in template JSON
+            function checkForInvoiceBlock(data) {
+                if (!data || typeof data !== 'object') return false;
+
+                // Check if this is an InvoiceBlock
+                if (data.type === 'InvoiceBlock') return true;
+
+                // Recursively check all values
+                for (let key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        if (checkForInvoiceBlock(data[key])) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            // Function to update PDF checkbox visibility for a specific step
+            function updatePdfCheckboxVisibilityRule(stepIndex) {
+                // Handle Email PDF checkbox
+                const emailPdfSection = document.querySelector(`.include-pdf-section-rule-${stepIndex}`);
+                if (emailPdfSection) {
+                    const emailSelect = document.querySelector(
+                        `select.email-template-select-rule[data-step-index="${stepIndex}"]`);
+                    if (emailSelect) {
+                        const templateId = emailSelect.value;
+                        if (!templateId) {
+                            emailPdfSection.style.display = 'none';
+                        } else {
+                            const template = EMAIL_TEMPLATES_DATA.find(t => t.id == templateId);
+                            if (template && template.template_json) {
+                                try {
+                                    const templateJson = typeof template.template_json === 'string' ?
+                                        JSON.parse(template.template_json) :
+                                        template.template_json;
+                                    const hasInvoiceBlock = checkForInvoiceBlock(templateJson);
+                                    emailPdfSection.style.display = hasInvoiceBlock ? 'block' : 'none';
+                                } catch (e) {
+                                    console.error('Error parsing template JSON:', e);
+                                    emailPdfSection.style.display = 'none';
+                                }
+                            } else {
+                                emailPdfSection.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+
+                // Handle WhatsApp PDF checkbox
+                const whatsappPdfSection = document.querySelector(`.include-pdf-section-rule-whatsapp-${stepIndex}`);
+                if (whatsappPdfSection) {
+                    const whatsappSelect = document.querySelector(
+                        `select.whatsapp-template-select-rule[data-step-index="${stepIndex}"]`);
+                    if (whatsappSelect && whatsappSelect.value) {
+                        whatsappPdfSection.style.display = 'block';
+                    } else {
+                        whatsappPdfSection.style.display = 'none';
+                    }
+                }
+            }
 
             //Needed to Reinitialize Select2 so that it wokrs on dynamically added elements
             $('.select2-single').select2();
@@ -307,6 +450,24 @@
 
                 // Reinitialize Select2 for the new step
                 $(container.lastElementChild).find('.select2-single').select2();
+
+                // Add event listener for email template selection
+                const emailSelect = container.lastElementChild.querySelector(
+                    `select.email-template-select-rule[data-step-index="${index}"]`);
+                if (emailSelect) {
+                    $(emailSelect).on('select2:select', function() {
+                        updatePdfCheckboxVisibilityRule(index);
+                    });
+                }
+
+                // Add event listener for WhatsApp template selection
+                const whatsappSelect = container.lastElementChild.querySelector(
+                    `select.whatsapp-template-select-rule[data-step-index="${index}"]`);
+                if (whatsappSelect) {
+                    $(whatsappSelect).on('select2:select', function() {
+                        updatePdfCheckboxVisibilityRule(index);
+                    });
+                }
             });
 
             container.addEventListener('click', function(e) {
@@ -320,6 +481,26 @@
             if (container.querySelectorAll('.step-item').length === 0) {
                 addButton.click();
             }
+
+            // Add event listeners for existing email template selects
+            container.querySelectorAll('.email-template-select-rule').forEach(select => {
+                const stepIndex = select.getAttribute('data-step-index');
+                $(select).on('select2:select', function() {
+                    updatePdfCheckboxVisibilityRule(stepIndex);
+                });
+                // Check on initial load
+                updatePdfCheckboxVisibilityRule(stepIndex);
+            });
+
+            // Add event listeners for existing WhatsApp template selects
+            container.querySelectorAll('.whatsapp-template-select-rule').forEach(select => {
+                const stepIndex = select.getAttribute('data-step-index');
+                $(select).on('select2:select', function() {
+                    updatePdfCheckboxVisibilityRule(stepIndex);
+                });
+                // Check on initial load
+                updatePdfCheckboxVisibilityRule(stepIndex);
+            });
 
         });
     </script>

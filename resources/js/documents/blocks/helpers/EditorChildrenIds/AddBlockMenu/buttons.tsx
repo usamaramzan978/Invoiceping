@@ -3,6 +3,7 @@ import React from 'react';
 import {
   AccountCircleOutlined,
   Crop32Outlined,
+  DescriptionOutlined,
   HMobiledataOutlined,
   HorizontalRuleOutlined,
   HtmlOutlined,
@@ -151,6 +152,20 @@ export const BUTTONS: TButtonProps[] = [
       type: 'Container',
       data: {
         style: { padding: { top: 16, bottom: 16, left: 24, right: 24 } },
+      },
+    }),
+  },
+  {
+    label: 'Invoice PDF',
+    icon: <DescriptionOutlined />,
+    block: () => ({
+      type: 'InvoiceBlock',
+      data: {
+        style: {
+          padding: { top: 16, bottom: 16, left: 24, right: 24 },
+          backgroundColor: '#f8f9fa',
+        },
+        props: {},
       },
     }),
   },

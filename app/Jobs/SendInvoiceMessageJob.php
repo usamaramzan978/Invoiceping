@@ -37,6 +37,8 @@ final class SendInvoiceMessageJob implements ShouldQueue
      * @param  string|null  $invoiceId  Invoice UUID
      * @param  string|null  $subject  Email subject (only for email channel)
      * @param  string|null  $fromEmail  Sender email (only for email channel)
+     * @param  string|null  $pdfPath  PDF file path (for email and WhatsApp)
+     * @param  string|null  $pdfFileName  PDF filename (for email and WhatsApp)
      */
     public function __construct(
         public string $channel,
@@ -46,6 +48,8 @@ final class SendInvoiceMessageJob implements ShouldQueue
         public ?string $invoiceId = null,
         public ?string $subject = null,
         public ?string $fromEmail = null,
+        public ?string $pdfPath = null,
+        public ?string $pdfFileName = null,
     ) {}
 
     /**
@@ -200,7 +204,13 @@ final class SendInvoiceMessageJob implements ShouldQueue
 
         try {
             $whatsappService = app(WhatsAppService::class);
-            $result = $whatsappService->send($this->userId, $this->recipient, $this->content);
+            $result = $whatsappService->send(
+                $this->userId,
+                $this->recipient,
+                $this->content,
+                $this->pdfPath,
+                $this->pdfFileName
+            );
 
             $provider = $result['provider'] ?? 'unknown';
 

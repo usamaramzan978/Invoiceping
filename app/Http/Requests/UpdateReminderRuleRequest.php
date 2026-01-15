@@ -33,6 +33,7 @@ final class UpdateReminderRuleRequest extends FormRequest
             'steps.*.channels.*.channel' => ['required', 'string'],
             'steps.*.channels.*.message_template_id' => ['nullable', 'uuid'],
             'steps.*.channels.*.email_template_id' => ['nullable', 'integer'],
+            'steps.*.channels.*.include_pdf' => ['sometimes', 'boolean'],
         ];
     }
 }

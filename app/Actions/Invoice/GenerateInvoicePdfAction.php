@@ -24,8 +24,16 @@ final readonly class GenerateInvoicePdfAction
 
     public function execute(Invoice $invoice, int $design = 1): string
     {
-        // Load relationships
-        $invoice->load(['client', 'items', 'business']);
+        // Load relationships only if not already loaded (optimization)
+        if (! $invoice->relationLoaded('client')) {
+            $invoice->load('client');
+        }
+        if (! $invoice->relationLoaded('items')) {
+            $invoice->load('items');
+        }
+        if (! $invoice->relationLoaded('business')) {
+            $invoice->load('business');
+        }
 
         // Delete old PDF from storage if it exists
         if ($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path)) {

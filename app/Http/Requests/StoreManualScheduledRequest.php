@@ -50,6 +50,7 @@ final class StoreManualScheduledRequest extends FormRequest
                 'uuid',
                 Rule::exists('message_templates', 'id')->where('user_id', $userId)->where('is_active', true),
             ],
+            'include_pdf' => ['sometimes', 'boolean'],
         ];
     }
 

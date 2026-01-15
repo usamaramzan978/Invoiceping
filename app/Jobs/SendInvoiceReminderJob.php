@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\ReminderStatusEnum;
+use App\Models\Invoice;
 use App\Models\ReminderSchedule;
+use App\Services\InvoiceBlockProcessor;
 use App\Services\LogService;
 use App\Services\TemplateVariableService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 final class SendInvoiceReminderJob implements ShouldQueue
@@ -32,14 +35,17 @@ final class SendInvoiceReminderJob implements ShouldQueue
      */
     public function handle(
         TemplateVariableService $variableService,
-        LogService $logService
+        LogService $logService,
+        InvoiceBlockProcessor $invoiceBlockProcessor
     ): void {
+        // Eager load only necessary relationships to keep job lightweight
         $schedule = ReminderSchedule::query()
             ->with([
-                'invoice.client',
-                'invoice.business',
-                'emailTemplate',
-                'messageTemplate',
+                'invoice:id,client_id,business_id,pdf_path', // Only load needed invoice fields
+                'invoice.client:id,email,phone,whatsapp_number', // Only load needed client fields
+                'invoice.business:id,user_id,email', // Only load needed business fields
+                'emailTemplate:id,template_html,template_json,subject', // Only load needed template fields
+                'messageTemplate:id,content', // Only load needed template fields
             ])
             ->findOrFail($this->reminderScheduleId);
 
@@ -63,6 +69,39 @@ final class SendInvoiceReminderJob implements ShouldQueue
             $processedContent = $variableService->replaceVariables($content, $schedule->invoice);
             $processedSubject = $subject ? $variableService->replaceVariables($subject, $schedule->invoice) : null;
 
+            // Process InvoiceBlock if this is an email template
+            // Optimize: Only check for InvoiceBlock if we need to process it
+            $pdfPath = null;
+            $pdfFileName = null;
+            $includePdf = $schedule->include_pdf ?? false;
+
+            if ($schedule->isEmailChannel() && $schedule->emailTemplate) {
+                // Check if template has InvoiceBlock (only check once)
+                $hasInvoiceBlock = $invoiceBlockProcessor->hasInvoiceBlock($schedule->emailTemplate->template_json ?? []);
+
+                if ($hasInvoiceBlock) {
+                    // Process InvoiceBlock: include PDF or remove placeholder based on include_pdf setting
+                    // This value comes from:
+                    // - Manual schedules: user checkbox selection
+                    // - Rule-based schedules: copied from reminder_rule_step_templates.include_pdf
+                    $processedContent = $invoiceBlockProcessor->processInvoiceBlocks(
+                        $processedContent,
+                        $schedule->invoice,
+                        $includePdf
+                    );
+
+                    // Get PDF path for email attachment if PDF is included
+                    if ($includePdf) {
+                        $pdfPath = $this->getPdfPath($schedule->invoice);
+                        $pdfFileName = $pdfPath ? 'invoice-' . $schedule->invoice->invoice_number . '.pdf' : null;
+                    }
+                }
+            } elseif ($schedule->isWhatsAppChannel() && $includePdf) {
+                // For WhatsApp, get PDF path if checkbox is checked
+                $pdfPath = $this->getPdfPath($schedule->invoice);
+                $pdfFileName = $pdfPath ? 'invoice-' . $schedule->invoice->invoice_number . '.pdf' : null;
+            }
+
             // Get recipient based on channel
             $recipient = $this->getRecipient($schedule->invoice, $schedule->channel->value);
             $fromEmail = $this->getFromEmail($schedule->invoice);
@@ -84,6 +123,8 @@ final class SendInvoiceReminderJob implements ShouldQueue
                 invoiceId: $schedule->invoice->id,
                 subject: $processedSubject,
                 fromEmail: $fromEmail,
+                pdfPath: $pdfPath,
+                pdfFileName: $pdfFileName,
             ));
 
             // Update reminder schedule status to sent
@@ -164,6 +205,34 @@ final class SendInvoiceReminderJob implements ShouldQueue
         }
 
         throw new Exception('Template not found for reminder schedule');
+    }
+
+    /**
+     * Get PDF path for invoice. Generates PDF if it doesn't exist.
+     *
+     * @return string|null PDF path or null if generation fails
+     */
+    private function getPdfPath(Invoice $invoice): ?string
+    {
+        // Check if PDF already exists
+        if ($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path)) {
+            return $invoice->pdf_path;
+        }
+
+        // Generate PDF synchronously for immediate sending
+        try {
+            $design = 1; // TODO: Get from invoice->pdf_design when that field exists
+            $generatePdfAction = app(\App\Actions\Invoice\GenerateInvoicePdfAction::class);
+
+            return $generatePdfAction->execute($invoice, $design);
+        } catch (Exception $exception) {
+            Log::error('Failed to generate PDF for invoice', [
+                'invoice_id' => $invoice->id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

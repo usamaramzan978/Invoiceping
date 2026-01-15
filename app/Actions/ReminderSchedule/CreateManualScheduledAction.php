@@ -62,6 +62,7 @@ final readonly class CreateManualScheduledAction
             'channel' => $validated['channel'],
             'email_template_id' => $validated['channel'] === 'email' ? $validated['email_template_id'] : null,
             'message_template_id' => in_array($validated['channel'], ['whatsapp', 'sms']) ? $validated['message_template_id'] : null,
+            'include_pdf' => (bool) ($validated['include_pdf'] ?? false),
             'bulk_group_id' => $bulkGroupId,
             'scheduled_at' => Date::parse($validated['scheduled_at']),
             'status' => ReminderStatusEnum::PENDING,

@@ -52,7 +52,8 @@
                         <div class="card-title">Manual Reminder Configuration</div>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('manual-scheduled.update', $schedule->id) }}" method="POST" id="reminderForm">
+                        <form action="{{ route('manual-scheduled.update', $schedule->id) }}" method="POST"
+                            id="reminderForm">
                             @csrf
                             @method('PUT')
                             <div class="row gy-4">
@@ -108,7 +109,7 @@
                                             <option value="{{ $template->id }}"
                                                 {{ $schedule->email_template_id == $template->id ? 'selected' : '' }}>
                                                 {{ $template->name }}
-                                                @if($template->is_default)
+                                                @if ($template->is_default)
                                                     <span class="text-muted">(Default)</span>
                                                 @endif
                                             </option>
@@ -117,6 +118,23 @@
                                     @error('email_template_id')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
+
+                                    <!-- Include PDF Checkbox (only for email templates with InvoiceBlock) -->
+                                    <div id="include-pdf-section-manual-edit-email" class="mt-3" style="display: none;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="include_pdf"
+                                                id="include-pdf-checkbox-manual-edit-email" value="1"
+                                                {{ old('include_pdf', $schedule->include_pdf ?? false) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="include-pdf-checkbox-manual-edit-email">
+                                                <strong>Include Invoice PDF (Email)</strong>
+                                                <small class="d-block text-muted mt-1">
+                                                    <i class="ri-information-line me-1"></i>
+                                                    Attach invoice PDF if the selected email template contains an invoice
+                                                    block
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- STEP 3: Select Template (WhatsApp/SMS) -->
@@ -128,12 +146,11 @@
                                         class="form-select select2-single">
                                         <option value="">Select a template...</option>
                                         @foreach ($messageTemplates as $template)
-                                            <option value="{{ $template->id }}"
-                                                data-channel="{{ $template->channel }}"
+                                            <option value="{{ $template->id }}" data-channel="{{ $template->channel }}"
                                                 {{ $schedule->message_template_id == $template->id ? 'selected' : '' }}>
                                                 {{ $template->name }}
                                                 <span class="text-muted">({{ ucfirst($template->channel) }})</span>
-                                                @if($template->is_default)
+                                                @if ($template->is_default)
                                                     <span class="text-muted">- Default</span>
                                                 @endif
                                             </option>
@@ -142,6 +159,22 @@
                                     @error('message_template_id')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
+
+                                    <!-- Include PDF Checkbox (for WhatsApp) -->
+                                    <div id="include-pdf-section-manual-edit-whatsapp" class="mt-3" style="display: none;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="include_pdf"
+                                                id="include-pdf-checkbox-manual-edit-whatsapp" value="1"
+                                                {{ old('include_pdf', $schedule->include_pdf ?? false) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="include-pdf-checkbox-manual-edit-whatsapp">
+                                                <strong>Include Invoice PDF (WhatsApp)</strong>
+                                                <small class="d-block text-muted mt-1">
+                                                    <i class="ri-information-line me-1"></i>
+                                                    Attach invoice PDF as document in WhatsApp message
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- STEP 4: Schedule Date/Time -->
@@ -149,8 +182,10 @@
                                     <label for="scheduled_at" class="form-label fw-600">
                                         <span class="badge bg-success">Step 4</span> Scheduled Date & Time
                                     </label>
-                                    <input type="datetime-local" class="form-control" id="scheduled_at" name="scheduled_at"
-                                        value="{{ $schedule->scheduled_at ? $schedule->scheduled_at->format('Y-m-d\TH:i') : '' }}" required>
+                                    <input type="datetime-local" class="form-control" id="scheduled_at"
+                                        name="scheduled_at"
+                                        value="{{ $schedule->scheduled_at ? $schedule->scheduled_at->format('Y-m-d\TH:i') : '' }}"
+                                        required>
                                     <small class="text-muted d-block mt-1">⏰ When should this reminder be sent?</small>
                                     @error('scheduled_at')
                                         <div class="text-danger small">{{ $message }}</div>
@@ -181,12 +216,14 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <h6 class="fw-600 mb-2">✏️ One-Time Reminders</h6>
-                            <p class="text-muted small mb-0">Manual scheduling allows you to send a single reminder at a specific time. Perfect for one-off reminders or custom follow-ups.</p>
+                            <p class="text-muted small mb-0">Manual scheduling allows you to send a single reminder at a
+                                specific time. Perfect for one-off reminders or custom follow-ups.</p>
                         </div>
                         <hr>
                         <div class="mb-3">
                             <h6 class="fw-600 mb-2">📧 Multiple Channels</h6>
-                            <p class="text-muted small mb-0">Choose from Email, WhatsApp, or SMS. Each channel requires its own template, so make sure you have the appropriate template ready.</p>
+                            <p class="text-muted small mb-0">Choose from Email, WhatsApp, or SMS. Each channel requires its
+                                own template, so make sure you have the appropriate template ready.</p>
                         </div>
                         <hr>
                         <div class="alert alert-warning py-2 mb-0" style="font-size: 12px;">
@@ -213,6 +250,65 @@
 
             const allMessageTemplateOptions = Array.from(messageTemplateSelect.options);
 
+            // Store email templates data for InvoiceBlock detection
+            const EMAIL_TEMPLATES_DATA = @json($emailTemplatesJson ?? []);
+
+            // Function to recursively check for InvoiceBlock in template JSON
+            function checkForInvoiceBlock(data) {
+                if (!data || typeof data !== 'object') return false;
+
+                // Check if this is an InvoiceBlock
+                if (data.type === 'InvoiceBlock') return true;
+
+                // Recursively check all values
+                for (let key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        if (checkForInvoiceBlock(data[key])) return true;
+                    }
+                }
+
+                return false;
+            }
+
+            // Function to update PDF checkbox visibility based on selected email template
+            function updatePdfCheckboxVisibilityManualEdit() {
+                // Handle Email PDF checkbox
+                const emailPdfSection = document.getElementById('include-pdf-section-manual-edit-email');
+                if (emailPdfSection) {
+                    if (channelSelect.value !== 'email') {
+                        emailPdfSection.style.display = 'none';
+                    } else {
+                        // Check selected email template
+                        const templateId = emailTemplateSelect.value;
+                        if (!templateId) {
+                            emailPdfSection.style.display = 'none';
+                        } else {
+                            const template = EMAIL_TEMPLATES_DATA.find(t => t.id == templateId);
+                            if (template && template.template_json) {
+                                try {
+                                    const templateJson = typeof template.template_json === 'string' ?
+                                        JSON.parse(template.template_json) :
+                                        template.template_json;
+                                    const hasInvoiceBlock = checkForInvoiceBlock(templateJson);
+                                    emailPdfSection.style.display = hasInvoiceBlock ? 'block' : 'none';
+                                } catch (e) {
+                                    console.error('Error parsing template JSON:', e);
+                                    emailPdfSection.style.display = 'none';
+                                }
+                            } else {
+                                emailPdfSection.style.display = 'none';
+                            }
+                        }
+                    }
+                }
+
+                // Handle WhatsApp PDF checkbox
+                const whatsappPdfSection = document.getElementById('include-pdf-section-manual-edit-whatsapp');
+                if (whatsappPdfSection) {
+                    whatsappPdfSection.style.display = (channelSelect.value === 'whatsapp') ? 'block' : 'none';
+                }
+            }
+
             // Update template sections based on channel
             function updateTemplateSections() {
                 const selectedChannel = channelSelect.value;
@@ -229,7 +325,7 @@
                     emailTemplateSelect.removeAttribute('required');
                     messageTemplateSelect.setAttribute('required', 'required');
                     emailTemplateSelect.value = '';
-                    
+
                     // Filter message templates by channel
                     filterMessageTemplatesByChannel();
                 } else {
@@ -238,6 +334,9 @@
                     emailTemplateSelect.removeAttribute('required');
                     messageTemplateSelect.removeAttribute('required');
                 }
+
+                // Update PDF checkbox visibility when channel changes
+                updatePdfCheckboxVisibilityManualEdit();
             }
 
             // Filter message templates by channel
@@ -288,6 +387,10 @@
                 updateTemplateSections();
             });
 
+            $(emailTemplateSelect).on('select2:select', function() {
+                updatePdfCheckboxVisibilityManualEdit();
+            });
+
             // Form validation
             reminderForm.addEventListener('submit', function(e) {
                 if (!channelSelect.value) {
@@ -295,7 +398,7 @@
                     alert('Please select a channel');
                     return false;
                 }
-                
+
                 const selectedChannel = channelSelect.value;
                 if (selectedChannel === 'email') {
                     if (!emailTemplateSelect.value) {
@@ -322,7 +425,8 @@
                 const now = new Date();
                 if (scheduledDate <= now) {
                     e.preventDefault();
-                    alert('The scheduled date must be in the future. Please select a future date and time.');
+                    alert(
+                    'The scheduled date must be in the future. Please select a future date and time.');
                     scheduledAtInput.focus();
                     return false;
                 }
@@ -332,7 +436,8 @@
             if (channelSelect.value) {
                 updateTemplateSections();
             }
+            // Check PDF checkbox visibility on initial load
+            setTimeout(updatePdfCheckboxVisibilityManualEdit, 200);
         });
     </script>
 @endsection
-

@@ -246,6 +246,7 @@ final class InvoiceController extends Controller
                     'content' => $content ?? 'Email template content',
                     'channel' => 'email',
                     'is_default' => $template->is_default,
+                    'template_json' => $template->template_json, // Include template_json for InvoiceBlock detection
                 ];
             });
 

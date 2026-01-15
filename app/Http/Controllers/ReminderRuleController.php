@@ -58,9 +58,19 @@ final class ReminderRuleController extends Controller
             ->where('is_active', true)
             ->get();
 
+        // Pass email templates with template_json for JavaScript InvoiceBlock detection
+        $emailTemplatesWithJson = $emailTemplates->map(function ($template) {
+            return [
+                'id' => $template->id,
+                'name' => $template->name,
+                'template_json' => $template->template_json,
+            ];
+        });
+
         return view('dashboard.reminder-rules.create', [
             'messageTemplates' => $messageTemplates,
             'emailTemplates' => $emailTemplates,
+            'emailTemplatesJson' => $emailTemplatesWithJson, // For JavaScript
         ]);
     }
 
@@ -92,10 +102,20 @@ final class ReminderRuleController extends Controller
             ->where('is_active', true)
             ->get();
 
+        // Pass email templates with template_json for JavaScript InvoiceBlock detection
+        $emailTemplatesWithJson = $emailTemplates->map(function ($template) {
+            return [
+                'id' => $template->id,
+                'name' => $template->name,
+                'template_json' => $template->template_json,
+            ];
+        });
+
         return view('dashboard.reminder-rules.edit', [
             'rule' => $rule,
             'messageTemplates' => $messageTemplates,
             'emailTemplates' => $emailTemplates,
+            'emailTemplatesJson' => $emailTemplatesWithJson, // For JavaScript
         ]);
     }
 
