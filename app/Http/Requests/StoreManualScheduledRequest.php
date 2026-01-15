@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\BusinessProfile;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ final class StoreManualScheduledRequest extends FormRequest
     {
         $user = $this->user();
         $userId = $user->id;
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = $user->business;
         $businessId = $business?->id;
 

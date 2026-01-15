@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessProfile;
 use App\Actions\ReminderSchedule\CreateRuleScheduledAction;
 use App\Actions\ReminderSchedule\UpdateRuleScheduledAction;
 use App\Http\Requests\StoreRuleScheduledRequest;
@@ -32,13 +33,10 @@ final class RuleScheduledController extends Controller
         Gate::authorize('create', ReminderSchedule::class);
 
         $user = auth()->user();
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        /** @var \App\Models\BusinessProfile $business */
-        $business = $business;
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
             ->with('client')
@@ -89,9 +87,6 @@ final class RuleScheduledController extends Controller
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        /** @var \App\Models\BusinessProfile $business */
-        $business = $business;
         abort_unless(
             $schedule->source_type->value === 'rule',
             404,

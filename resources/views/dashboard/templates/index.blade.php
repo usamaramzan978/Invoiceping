@@ -17,14 +17,6 @@
         </div>
         <!-- Page Header Close -->
 
-        <!-- Success Alert -->
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="ri-check-line me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
         <!-- Stats Cards -->
         <div class="row mb-4">
             <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">

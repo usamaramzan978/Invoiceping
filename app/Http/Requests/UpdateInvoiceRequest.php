@@ -69,6 +69,7 @@ final class UpdateInvoiceRequest extends FormRequest
             'items.*.quantity.required' => 'Quantity is required for all items.',
             'items.*.quantity.min' => 'Quantity must be at least 0.01.',
             'items.*.unit_price.required' => 'Unit price is required for all items.',
+            'items.*.unit_price.min' => 'Unit price :position must be at least :min.',
         ];
     }
 }

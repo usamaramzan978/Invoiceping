@@ -9,6 +9,7 @@ use App\Actions\BussinessProfile\UpdateBusinessProfileAction;
 use App\Http\Requests\StoreBusinessProfileRequest;
 use App\Http\Requests\UpdateBusinessProfileRequest;
 use App\Models\BusinessProfile;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -43,9 +44,13 @@ final class BusinessProfileController extends Controller
     {
         Gate::authorize('create', BusinessProfile::class);
 
-        $action->execute($request->user(), $request->validated());
+        try {
+            $action->execute($request->user(), $request->validated());
 
-        return to_route('business-profile.index')->with('success', 'Business profile created successfully.');
+            return to_route('business-profile.index')->with('success', 'Business profile created successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to create business profile: '.$exception->getMessage());
+        }
     }
 
     public function show(BusinessProfile $businessProfile): View
@@ -66,8 +71,12 @@ final class BusinessProfileController extends Controller
     {
         Gate::authorize('update', $businessProfile);
 
-        $action->execute($businessProfile, $request->validated());
+        try {
+            $action->execute($businessProfile, $request->validated());
 
-        return to_route('business-profile.show', $businessProfile)->with('success', 'Business profile updated successfully.');
+            return to_route('business-profile.show', $businessProfile)->with('success', 'Business profile updated successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to update business profile: '.$exception->getMessage());
+        }
     }
 }

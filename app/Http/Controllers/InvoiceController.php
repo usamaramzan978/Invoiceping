@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessProfile;
 use App\Actions\Invoice\CreateInvoiceAction;
 use App\Actions\Invoice\DeleteInvoiceAction;
 use App\Actions\Invoice\GenerateInvoicePdfAction;
@@ -14,6 +15,7 @@ use App\Models\Client;
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\MessageTemplates;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,7 +44,7 @@ final class InvoiceController extends Controller
                 ->with('success', 'Please create a business profile first.');
         }
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $user->business;
         $businessId = $business->id;
 
@@ -100,9 +102,13 @@ final class InvoiceController extends Controller
     {
         Gate::authorize('create', Invoice::class);
 
-        $this->createInvoice->execute(auth()->user()->business, $request->validated());
+        try {
+            $this->createInvoice->execute(auth()->user()->business, $request->validated());
 
-        return to_route('invoices.index')->with('success', 'Invoice created successfully.');
+            return to_route('invoices.index')->with('success', 'Invoice created successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to create invoice: '.$exception->getMessage());
+        }
     }
 
     public function show(Invoice $invoice): View
@@ -128,9 +134,13 @@ final class InvoiceController extends Controller
     {
         Gate::authorize('update', $invoice);
 
-        $action->execute($invoice, $request->validated());
+        try {
+            $action->execute($invoice, $request->validated());
 
-        return to_route('invoices.show', $invoice)->with('success', 'Invoice updated successfully.');
+            return to_route('invoices.show', $invoice)->with('success', 'Invoice updated successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to update invoice: '.$exception->getMessage());
+        }
     }
 
     public function preview(Request $request): View
@@ -145,7 +155,7 @@ final class InvoiceController extends Controller
         }
 
         // Get business information
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = auth()->user()->business;
 
         // Prepare invoice data object for the view

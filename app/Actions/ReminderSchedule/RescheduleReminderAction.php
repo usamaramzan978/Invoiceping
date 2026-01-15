@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\ReminderSchedule;
 
+use App\Models\BusinessProfile;
 use App\Enums\ReminderStatusEnum;
 use App\Models\ReminderSchedule;
 use Carbon\Carbon;
@@ -69,7 +70,7 @@ final readonly class RescheduleReminderAction
 
         throw_if(! $schedule->invoice || ! $schedule->invoice->business, InvalidArgumentException::class, 'Schedule invoice or business not found.');
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $schedule->invoice->business;
         throw_if($business->user_id !== $userId, InvalidArgumentException::class, 'You do not have permission to reschedule this reminder schedule.');
     }

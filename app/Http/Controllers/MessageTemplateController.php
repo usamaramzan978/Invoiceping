@@ -11,6 +11,7 @@ use App\Http\Requests\StoreMessageTemplateRequest;
 use App\Http\Requests\UpdateMessageTemplateRequest;
 use App\Models\MessageTemplates;
 use App\Services\TemplateVariableService;
+use Exception;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -63,9 +64,13 @@ final class MessageTemplateController extends Controller
     {
         Gate::authorize('create', MessageTemplates::class);
 
-        $this->createAction->execute(auth()->id(), $request->validated());
+        try {
+            $this->createAction->execute(auth()->id(), $request->validated());
 
-        return to_route('templates.index')->with('success', 'Template created successfully!');
+            return to_route('templates.index')->with('success', 'Template created successfully!');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to create template: '.$exception->getMessage());
+        }
     }
 
     /**
@@ -101,9 +106,13 @@ final class MessageTemplateController extends Controller
     {
         Gate::authorize('update', $template);
 
-        $this->updateAction->execute($template, $request->validated());
+        try {
+            $this->updateAction->execute($template, $request->validated());
 
-        return to_route('templates.index')->with('success', 'Template updated successfully!');
+            return to_route('templates.index')->with('success', 'Template updated successfully!');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to update template: '.$exception->getMessage());
+        }
     }
 
     /**

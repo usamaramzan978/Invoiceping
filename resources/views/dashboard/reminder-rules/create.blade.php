@@ -19,6 +19,19 @@
         </div>
         <!-- Page Header Close -->
 
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ri-error-warning-line me-2"></i>
+                <strong>Please fix the following errors:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <form
             action="{{ isset($rule) ? route('reminder-rules.update', ['rule' => $rule]) : route('reminder-rules.store') }}"
             method="POST">
@@ -37,9 +50,12 @@
                             <div class="row gy-3">
                                 <div class="col-md-6">
                                     <label for="name" class="form-label">Rule Name</label>
-                                    <input type="text" class="form-control" id="name" name="name"
-                                        value="{{ old('name', $rule->name ?? '') }}"
+                                    <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                        id="name" name="name" value="{{ old('name', $rule->name ?? '') }}"
                                         placeholder="e.g. Default 3-Step Follow-up" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check form-switch">
@@ -56,8 +72,8 @@
                     <div class="card custom-card">
                         <div class="card-header justify-content-between">
                             <div class="card-title">Reminder Steps</div>
-                            <button type="button" class="btn btn-sm btn-secondary" id="add-step"
-                                data-bs-toggle="tooltip" data-bs-placement="top" title="Add New Step">
+                            <button type="button" class="btn btn-sm btn-secondary" id="add-step" data-bs-toggle="tooltip"
+                                data-bs-placement="top" title="Add New Step">
                                 <i class="ri-add-line me-1"></i> Add Step
                             </button>
                         </div>
@@ -175,7 +191,8 @@
                                                             'channel',
                                                             'whatsapp',
                                                         );
-                                                        $includePdfWhatsappValue = $whatsappChannelData['include_pdf'] ?? false;
+                                                        $includePdfWhatsappValue =
+                                                            $whatsappChannelData['include_pdf'] ?? false;
                                                     @endphp
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text" style="width: 100px;">📱
@@ -201,7 +218,8 @@
                                                         <div class="form-check ms-4">
                                                             <input class="form-check-input" type="checkbox"
                                                                 name="steps[{{ $index }}][channels][whatsapp][include_pdf]"
-                                                                id="include-pdf-rule-whatsapp-{{ $index }}" value="1"
+                                                                id="include-pdf-rule-whatsapp-{{ $index }}"
+                                                                value="1"
                                                                 {{ $includePdfWhatsappValue ? 'checked' : '' }}>
                                                             <label class="form-check-label"
                                                                 for="include-pdf-rule-whatsapp-{{ $index }}">
@@ -415,7 +433,8 @@
                 }
 
                 // Handle WhatsApp PDF checkbox
-                const whatsappPdfSection = document.querySelector(`.include-pdf-section-rule-whatsapp-${stepIndex}`);
+                const whatsappPdfSection = document.querySelector(
+                    `.include-pdf-section-rule-whatsapp-${stepIndex}`);
                 if (whatsappPdfSection) {
                     const whatsappSelect = document.querySelector(
                         `select.whatsapp-template-select-rule[data-step-index="${stepIndex}"]`);

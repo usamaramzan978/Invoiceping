@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessProfile;
 use App\Actions\Client\CreateClientAction;
 use App\Actions\Client\DeleteClientAction;
 use App\Actions\Client\UpdateClientAction;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,7 @@ final class ClientController extends Controller
     {
         Gate::authorize('viewAny', Client::class);
 
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = auth()->user()->business;
         $businessId = $business?->id;
 
@@ -51,11 +53,15 @@ final class ClientController extends Controller
     {
         Gate::authorize('create', Client::class);
 
-        $data = $request->validated();
-        $data['business_id'] = auth()->user()->business->id ?? null;
-        $this->createClient->handle($data);
+        try {
+            $data = $request->validated();
+            $data['business_id'] = auth()->user()->business->id ?? null;
+            $this->createClient->handle($data);
 
-        return to_route('clients.index')->with('success', 'Client created successfully.');
+            return to_route('clients.index')->with('success', 'Client created successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to create client: '.$exception->getMessage());
+        }
     }
 
     public function show(Client $client): View
@@ -76,10 +82,14 @@ final class ClientController extends Controller
     {
         Gate::authorize('update', $client);
 
-        $data = $request->validated();
-        $this->updateClient->handle($client, $data);
+        try {
+            $data = $request->validated();
+            $this->updateClient->handle($client, $data);
 
-        return to_route('clients.index')->with('success', 'Client updated successfully.');
+            return to_route('clients.index')->with('success', 'Client updated successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to update client: '.$exception->getMessage());
+        }
     }
 
     public function destroy(Request $request, Client $client): RedirectResponse|JsonResponse

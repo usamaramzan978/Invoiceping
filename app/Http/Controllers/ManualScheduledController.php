@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessProfile;
 use App\Actions\ReminderSchedule\CreateManualScheduledAction;
 use App\Actions\ReminderSchedule\UpdateManualScheduledAction;
 use App\Http\Requests\StoreManualScheduledRequest;
@@ -33,13 +34,10 @@ final class ManualScheduledController extends Controller
         Gate::authorize('create', ReminderSchedule::class);
 
         $user = auth()->user();
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        /** @var \App\Models\BusinessProfile $business */
-        $business = $business;
         $invoices = Invoice::query()
             ->where('business_id', $business->id)
             ->with('client')
@@ -57,7 +55,7 @@ final class ManualScheduledController extends Controller
             ->get();
 
         // Pass email templates with template_json for JavaScript InvoiceBlock detection
-        $emailTemplatesWithJson = $emailTemplates->map(fn($template): array => [
+        $emailTemplatesWithJson = $emailTemplates->map(fn ($template): array => [
             'id' => $template->id,
             'name' => $template->name,
             'template_json' => $template->template_json,
@@ -101,13 +99,10 @@ final class ManualScheduledController extends Controller
         Gate::authorize('update', $schedule);
 
         $user = auth()->user();
-        /** @var \App\Models\BusinessProfile|null $business */
+        /** @var BusinessProfile|null $business */
         $business = $user->business;
 
         abort_unless($business, 404, 'Business profile not found');
-
-        /** @var \App\Models\BusinessProfile $business */
-        $business = $business;
         abort_unless(
             $schedule->source_type->value === 'manual',
             404,
@@ -139,7 +134,7 @@ final class ManualScheduledController extends Controller
             : collect([$schedule]);
 
         // Pass email templates with template_json for JavaScript InvoiceBlock detection
-        $emailTemplatesWithJson = $emailTemplates->map(fn($template): array => [
+        $emailTemplatesWithJson = $emailTemplates->map(fn ($template): array => [
             'id' => $template->id,
             'name' => $template->name,
             'template_json' => $template->template_json,

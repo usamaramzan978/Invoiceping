@@ -19,22 +19,6 @@
         </div>
         <!-- Page Header Close -->
 
-        <!-- Success Alert -->
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="ri-check-line me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        <!-- Error Alert -->
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
         <div class="d-flex justify-content-end align-items-center mb-4">
             <a href="{{ route('whatsapp-providers.create') }}" class="btn btn-primary">
                 <i class="ri-add-line me-1"></i>Add Provider

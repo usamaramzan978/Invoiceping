@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\ReminderSchedule;
 
+use Illuminate\Database\Eloquent\Collection;
+use App\Models\ReminderRuleStep;
+use App\Models\BusinessProfile;
 use App\Enums\ReminderSourceTypeEnum;
 use App\Enums\ReminderStatusEnum;
 use App\Models\Invoice;
@@ -107,7 +110,7 @@ final readonly class CreateReminderScheduleAction
         $referenceDate = Date::parse($scheduledAt);
         $createdCount = 0;
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReminderRuleStep> $steps */
+        /** @var Collection<int, ReminderRuleStep> $steps */
         $steps = $rule->steps;
         foreach ($steps as $step) {
             $scheduledAtForStep = $this->calculateScheduledAt($referenceDate, $step);
@@ -157,14 +160,15 @@ final readonly class CreateReminderScheduleAction
     /**
      * Get user's business ID.
      */
-    private function getUserBusinessId(string $userId): ?string
+    private function getUserBusinessId(string $userId): string
     {
         $user = User::query()->with('business')->findOrFail($userId);
 
         throw_unless($user->business, InvalidArgumentException::class, 'Business profile not found. Please create a business profile first.');
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $user->business;
+
         return (string) $business->id;
     }
 

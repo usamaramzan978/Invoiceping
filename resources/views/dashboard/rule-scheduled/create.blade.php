@@ -17,21 +17,6 @@
             </div>
         </div>
 
-        <!-- Alert Messages -->
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="ri-check-line me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
         @if ($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="ri-error-warning-line me-2"></i>
@@ -65,7 +50,7 @@
                                         class="form-select select2-multiple-invoice" required multiple>
                                         @foreach ($invoices as $invoice)
                                             <option value="{{ $invoice->id }}"
-                                                {{ (is_array(old('invoice_ids')) && in_array($invoice->id, old('invoice_ids'))) ? 'selected' : '' }}>
+                                                {{ is_array(old('invoice_ids')) && in_array($invoice->id, old('invoice_ids')) ? 'selected' : '' }}>
                                                 #{{ $invoice->invoice_number }} - {{ $invoice->client->name }}
                                                 ({{ $invoice->total_amount }} {{ $invoice->currency }})
                                             </option>
@@ -81,8 +66,8 @@
                                     <label for="reminder_rule_id" class="form-label fw-600">
                                         <span class="badge bg-success">Step 2</span> Select Predefined Rule
                                     </label>
-                                    <select name="reminder_rule_id" id="reminder_rule_id"
-                                        class="form-select select2-single" required>
+                                    <select name="reminder_rule_id" id="reminder_rule_id" class="form-select select2-single"
+                                        required>
                                         <option value="">Choose a rule...</option>
                                         @foreach ($rules as $rule)
                                             <option value="{{ $rule->id }}"
@@ -91,7 +76,8 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted d-block mt-1">Selecting a rule will schedule all its steps automatically.</small>
+                                    <small class="text-muted d-block mt-1">Selecting a rule will schedule all its steps
+                                        automatically.</small>
                                     @error('reminder_rule_id')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
@@ -104,7 +90,8 @@
                                     </label>
                                     <input type="datetime-local" class="form-control" id="scheduled_at" name="scheduled_at"
                                         value="{{ old('scheduled_at') }}" required>
-                                    <small class="text-muted d-block mt-1">⏰ This date will be used as the reference point for calculating when each step in the rule should be sent.</small>
+                                    <small class="text-muted d-block mt-1">⏰ This date will be used as the reference point
+                                        for calculating when each step in the rule should be sent.</small>
                                     @error('scheduled_at')
                                         <div class="text-danger small">{{ $message }}</div>
                                     @enderror
@@ -134,16 +121,21 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <h6 class="fw-600 mb-2">⚙️ Automated Reminders</h6>
-                            <p class="text-muted small mb-0">When you select a rule, the system will automatically schedule all reminder steps defined in that rule. Each step will be calculated based on the reference date you provide.</p>
+                            <p class="text-muted small mb-0">When you select a rule, the system will automatically schedule
+                                all reminder steps defined in that rule. Each step will be calculated based on the reference
+                                date you provide.</p>
                         </div>
                         <hr>
                         <div class="mb-3">
                             <h6 class="fw-600 mb-2">📅 Reference Date</h6>
-                            <p class="text-muted small mb-0">The reference date is used to calculate when each step should be sent. For example, if a step is "3 days before due date", it will be scheduled 3 days before your reference date.</p>
+                            <p class="text-muted small mb-0">The reference date is used to calculate when each step should
+                                be sent. For example, if a step is "3 days before due date", it will be scheduled 3 days
+                                before your reference date.</p>
                         </div>
                         <hr>
                         <div class="alert alert-info py-2 mb-0" style="font-size: 12px;">
-                            <strong>Pro Tip:</strong> Use rule-based scheduling for automated follow-up sequences. Perfect for recurring reminder workflows!
+                            <strong>Pro Tip:</strong> Use rule-based scheduling for automated follow-up sequences. Perfect
+                            for recurring reminder workflows!
                         </div>
                     </div>
                 </div>
@@ -184,7 +176,9 @@
                 const now = new Date();
                 if (scheduledDate <= now) {
                     e.preventDefault();
-                    alert('The reference date must be in the future. Please select a future date and time.');
+                    alert(
+                        'The reference date must be in the future. Please select a future date and time.'
+                        );
                     scheduledAtInput.focus();
                     return false;
                 }
@@ -192,4 +186,3 @@
         });
     </script>
 @endsection
-

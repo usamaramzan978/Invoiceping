@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\Dashboard;
 
-use Illuminate\Support\Facades\Date;
 use App\Enums\InvoiceStatus;
 use App\Enums\ReminderStatusEnum;
 use App\Models\BusinessProfile;
@@ -12,6 +11,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\ReminderSchedule;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
 final readonly class GetDashboardAnalyticsAction
@@ -293,7 +293,7 @@ final readonly class GetDashboardAnalyticsAction
 
     private function getRevenueChartData(string $businessId): array
     {
-        $months = collect(range(5, 0))->map(fn($monthsAgo) => Date::now()->subMonths($monthsAgo));
+        $months = collect(range(5, 0))->map(fn ($monthsAgo) => Date::now()->subMonths($monthsAgo));
 
         $revenueData = $months->map(function ($month) use ($businessId): array {
             $start = $month->copy()->startOfMonth();
@@ -339,7 +339,7 @@ final readonly class GetDashboardAnalyticsAction
             ->with(['client:id,name', 'items'])->latest()
             ->limit($limit)
             ->get()
-            ->map(fn($invoice): array => [
+            ->map(fn ($invoice): array => [
                 'id' => $invoice->id,
                 'invoice_number' => $invoice->invoice_number,
                 'client_name' => $invoice->client->name ?? 'N/A',
@@ -362,7 +362,7 @@ final readonly class GetDashboardAnalyticsAction
             ->orderBy('invoices_sum_total_amount', 'desc')
             ->limit($limit)
             ->get()
-            ->map(fn($client): array => [
+            ->map(fn ($client): array => [
                 'id' => $client->id,
                 'name' => $client->name,
                 'total_revenue' => (float) ($client->invoices_sum_total_amount ?? 0),
@@ -374,7 +374,7 @@ final readonly class GetDashboardAnalyticsAction
     private function getMonthlyTrends(string $businessId): array
     {
         Date::now();
-        $months = collect(range(5, 0))->map(fn($monthsAgo) => Date::now()->subMonths($monthsAgo));
+        $months = collect(range(5, 0))->map(fn ($monthsAgo) => Date::now()->subMonths($monthsAgo));
 
         $trends = $months->map(function ($month) use ($businessId): array {
             $start = $month->copy()->startOfMonth();

@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateReminderRuleRequest;
 use App\Models\EmailTemplate;
 use App\Models\MessageTemplates;
 use App\Models\ReminderRule;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,7 +60,7 @@ final class ReminderRuleController extends Controller
             ->get();
 
         // Pass email templates with template_json for JavaScript InvoiceBlock detection
-        $emailTemplatesWithJson = $emailTemplates->map(fn($template): array => [
+        $emailTemplatesWithJson = $emailTemplates->map(fn ($template): array => [
             'id' => $template->id,
             'name' => $template->name,
             'template_json' => $template->template_json,
@@ -76,9 +77,13 @@ final class ReminderRuleController extends Controller
     {
         Gate::authorize('create', ReminderRule::class);
 
-        $this->createAction->execute(auth()->id(), $request->validated());
+        try {
+            $this->createAction->execute(auth()->id(), $request->validated());
 
-        return to_route('reminder-rules.index')->with('success', 'Reminder rule created successfully.');
+            return to_route('reminder-rules.index')->with('success', 'Reminder rule created successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to create reminder rule: '.$exception->getMessage());
+        }
     }
 
     public function edit(ReminderRule $rule): View
@@ -101,7 +106,7 @@ final class ReminderRuleController extends Controller
             ->get();
 
         // Pass email templates with template_json for JavaScript InvoiceBlock detection
-        $emailTemplatesWithJson = $emailTemplates->map(fn($template): array => [
+        $emailTemplatesWithJson = $emailTemplates->map(fn ($template): array => [
             'id' => $template->id,
             'name' => $template->name,
             'template_json' => $template->template_json,
@@ -119,9 +124,13 @@ final class ReminderRuleController extends Controller
     {
         Gate::authorize('update', $rule);
 
-        $this->updateAction->execute($rule, $request->validated());
+        try {
+            $this->updateAction->execute($rule, $request->validated());
 
-        return to_route('reminder-rules.index')->with('success', 'Reminder rule updated successfully.');
+            return to_route('reminder-rules.index')->with('success', 'Reminder rule updated successfully.');
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Failed to update reminder rule: '.$exception->getMessage());
+        }
     }
 
     public function destroy(Request $request, ReminderRule $rule): RedirectResponse|JsonResponse

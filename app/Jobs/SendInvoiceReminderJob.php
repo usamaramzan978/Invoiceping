@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\MessageChannel;
 use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Enums\ReminderStatusEnum;
 use App\Models\Invoice;
@@ -104,13 +105,11 @@ final class SendInvoiceReminderJob implements ShouldQueue
             }
 
             // Get recipient based on channel
-            $channelValue = $schedule->channel instanceof \App\Enums\MessageChannel ? $schedule->channel->value : (string) $schedule->channel;
+            $channelValue = $schedule->channel instanceof MessageChannel ? $schedule->channel->value : (string) $schedule->channel;
             $recipient = $this->getRecipient($schedule->invoice, $channelValue);
             $fromEmail = $this->getFromEmail($schedule->invoice);
 
-            if ($recipient === null) {
-                throw new Exception('Recipient not found for channel: '.$channelValue);
-            }
+            throw_if($recipient === null, Exception::class, 'Recipient not found for channel: '.$channelValue);
 
             // Get user ID from invoice business
             $userId = $schedule->invoice->business->user_id ?? null;

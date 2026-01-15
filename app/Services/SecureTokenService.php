@@ -148,7 +148,7 @@ final class SecureTokenService
     /**
      * Re-encrypt token (for key rotation)
      */
-    public function rotateToken($encryptedData, $userId, $userEmail, $userUuid): array
+    public function rotateToken($encryptedData, string $userId, string $userEmail, string $userUuid): array
     {
         // Decrypt with old key
         $decrypted = $this->decryptToken($encryptedData, $userId, $userEmail, $userUuid);

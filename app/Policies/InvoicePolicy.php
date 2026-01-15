@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Models\BusinessProfile;
 use App\Models\Invoice;
 use App\Models\User;
 
@@ -29,8 +30,9 @@ final class InvoicePolicy
             return false;
         }
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $invoice->business;
+
         return $business->user_id === $user->id;
     }
 
@@ -54,8 +56,9 @@ final class InvoicePolicy
             return false;
         }
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $invoice->business;
+
         return $business->user_id === $user->id;
     }
 
@@ -70,8 +73,9 @@ final class InvoicePolicy
             return false;
         }
 
-        /** @var \App\Models\BusinessProfile $business */
+        /** @var BusinessProfile $business */
         $business = $invoice->business;
+
         return $business->user_id === $user->id;
     }
 }

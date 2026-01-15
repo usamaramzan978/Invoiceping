@@ -318,6 +318,12 @@
                 @csrf
                 <input type="hidden" name="invoice_id" id="modal-invoice-id" value="">
                 <div class="modal-body">
+                    <!-- Error Display Area -->
+                    <div id="send-invoice-errors" class="alert alert-danger d-none" role="alert">
+                        <i class="ri-error-warning-line me-2"></i>
+                        <strong>Error:</strong>
+                        <ul id="send-invoice-error-list" class="mb-0 mt-2"></ul>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Channels</label><br>
                         <div class="form-check form-check-inline">
