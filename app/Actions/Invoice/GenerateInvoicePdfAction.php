@@ -28,9 +28,11 @@ final readonly class GenerateInvoicePdfAction
         if (! $invoice->relationLoaded('client')) {
             $invoice->load('client');
         }
+
         if (! $invoice->relationLoaded('items')) {
             $invoice->load('items');
         }
+
         if (! $invoice->relationLoaded('business')) {
             $invoice->load('business');
         }

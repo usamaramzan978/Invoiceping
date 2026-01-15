@@ -21,7 +21,6 @@ final class DashboardController extends Controller
             $request->user()->id
         );
 
-        return view('welcome', compact('analytics'));
+        return view('welcome', ['analytics' => $analytics]);
     }
-
 }

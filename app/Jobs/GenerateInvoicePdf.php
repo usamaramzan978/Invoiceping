@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use Illuminate\Support\Facades\Storage;
 use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Models\Invoice;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +45,7 @@ final class GenerateInvoicePdf implements ShouldQueue
             ->findOrFail($this->invoiceId);
 
         // Skip if PDF already exists (another job might have generated it)
-        if ($invoice->pdf_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($invoice->pdf_path)) {
+        if ($invoice->pdf_path && Storage::disk('public')->exists($invoice->pdf_path)) {
             Log::info('Invoice PDF already exists, skipping generation', [
                 'invoice_id' => $invoice->id,
                 'pdf_path' => $invoice->pdf_path,
@@ -59,7 +61,7 @@ final class GenerateInvoicePdf implements ShouldQueue
                 'invoice_id' => $invoice->id,
                 'design' => $this->design,
             ]);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             Log::error('Failed to generate invoice PDF via job', [
                 'invoice_id' => $invoice->id,
                 'design' => $this->design,

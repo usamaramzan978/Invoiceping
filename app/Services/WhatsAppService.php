@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Storage;
  */
 final class WhatsAppService
 {
-
     /**
      * Send WhatsApp message using the user's default provider.
      *
@@ -42,7 +41,7 @@ final class WhatsAppService
             // Send based on provider type
             return match ($provider->type) {
                 WhatsAppProviderType::WHATSAPP_CLOUD_API => $this->sendViaWhatsAppCloudApi($provider, $formattedPhone, $message, $pdfPath, $pdfFileName),
-                WhatsAppProviderType::TWILIO => $this->sendViaTwilio($provider, $formattedPhone, $message, $pdfPath, $pdfFileName),
+                WhatsAppProviderType::TWILIO => $this->sendViaTwilio($provider, $formattedPhone, $message, $pdfPath),
                 WhatsAppProviderType::VONAGE => $this->sendViaVonage($provider, $formattedPhone, $message, $pdfPath, $pdfFileName),
             };
         } catch (Exception $exception) {
@@ -57,6 +56,23 @@ final class WhatsAppService
                 'error' => $exception->getMessage(),
             ];
         }
+    }
+
+    public function verifyConnectionWhatsAppCloudApi(WhatsAppProvider $provider): bool
+    {
+        $accessToken = $provider->access_token; // Auto-decrypted via accessor
+        $phoneNumberId = $provider->phone_number_id;
+
+        throw_if(empty($accessToken) || empty($phoneNumberId), Exception::class, 'WhatsApp Cloud API credentials are missing');
+
+        $url = sprintf('https://graph.facebook.com/v18.0/%s/messages', $phoneNumberId);
+
+        $response = Http::withToken($accessToken)->get($url);
+        if ($response->successful()) {
+            return true;
+        }
+
+        throw new Exception('WhatsApp Cloud API verify connection failed: '.$response->body() ?? 'Unknown error');
     }
 
     /**
@@ -153,7 +169,7 @@ final class WhatsAppService
                 ];
             }
 
-            throw new Exception('WhatsApp Cloud API error: ' . $response->body());
+            throw new Exception('WhatsApp Cloud API error: '.$response->body());
         } catch (Exception $exception) {
             Log::error('WhatsApp Cloud API send failed', [
                 'provider_id' => $provider->id,
@@ -184,7 +200,7 @@ final class WhatsAppService
             }
 
             $fileContent = Storage::disk('public')->get($filePath);
-            $fileName = $fileName ?? basename($filePath);
+            $fileName ??= basename($filePath);
 
             // Upload media to WhatsApp Cloud API
             $uploadUrl = sprintf('https://graph.facebook.com/v18.0/%s/media', $phoneNumberId);
@@ -215,28 +231,13 @@ final class WhatsAppService
             return null;
         }
     }
-    public function verifyConnectionWhatsAppCloudApi(WhatsAppProvider $provider): bool
-    {
-        $accessToken = $provider->access_token; // Auto-decrypted via accessor
-        $phoneNumberId = $provider->phone_number_id;
 
-        throw_if(empty($accessToken) || empty($phoneNumberId), Exception::class, 'WhatsApp Cloud API credentials are missing');
-
-        $url = sprintf('https://graph.facebook.com/v18.0/%s/messages', $phoneNumberId);
-
-        $response = Http::withToken($accessToken)->get($url);
-        if ($response->successful()) {
-            return true;
-        }
-
-        throw new Exception('WhatsApp Cloud API verify connection failed: ' . $response->body() ?? 'Unknown error');
-    }
     /**
      * Send message via Twilio.
      *
      * @return array{success: bool, message_id?: string, provider: string, error?: string}
      */
-    private function sendViaTwilio(WhatsAppProvider $provider, string $phoneNumber, string $message, ?string $pdfPath = null, ?string $pdfFileName = null): array
+    private function sendViaTwilio(WhatsAppProvider $provider, string $phoneNumber, string $message, ?string $pdfPath = null): array
     {
         try {
             $accountSid = $provider->account_sid;
@@ -248,15 +249,15 @@ final class WhatsAppService
             $url = sprintf('https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json', $accountSid);
 
             $payload = [
-                'From' => 'whatsapp:' . $fromNumber,
-                'To' => 'whatsapp:' . $phoneNumber,
+                'From' => 'whatsapp:'.$fromNumber,
+                'To' => 'whatsapp:'.$phoneNumber,
                 'Body' => $message,
             ];
 
             // If PDF is provided, add media URL
             if ($pdfPath && Storage::disk('public')->exists($pdfPath)) {
                 // Twilio requires publicly accessible URL
-                $pdfUrl = asset('storage/' . $pdfPath);
+                $pdfUrl = asset('storage/'.$pdfPath);
                 $payload['MediaUrl'] = $pdfUrl;
             }
 
@@ -277,7 +278,7 @@ final class WhatsAppService
                 ];
             }
 
-            throw new Exception('Twilio API error: ' . $response->body());
+            throw new Exception('Twilio API error: '.$response->body());
         } catch (Exception $exception) {
             Log::error('Twilio send failed', [
                 'provider_id' => $provider->id,
@@ -322,7 +323,7 @@ final class WhatsAppService
             // If PDF is provided, send document message
             if ($pdfPath && Storage::disk('public')->exists($pdfPath)) {
                 // Vonage requires publicly accessible URL
-                $pdfUrl = asset('storage/' . $pdfPath);
+                $pdfUrl = asset('storage/'.$pdfPath);
                 $fileName = $pdfFileName ?? basename($pdfPath);
 
                 $messagePayload['message'] = [
@@ -364,7 +365,7 @@ final class WhatsAppService
                 ];
             }
 
-            throw new Exception('Vonage API error: ' . $response->body());
+            throw new Exception('Vonage API error: '.$response->body());
         } catch (Exception $exception) {
             Log::error('Vonage send failed', [
                 'provider_id' => $provider->id,
@@ -387,14 +388,14 @@ final class WhatsAppService
     {
         // If already in E.164 format (starts with +), remove + and return
         if (str_starts_with($phone, '+')) {
-            return ltrim($phone, '+');
+            return mb_ltrim($phone, '+');
         }
 
         // Remove any non-digit characters
         $cleaned = preg_replace('/\D/', '', $phone);
 
         // If already starts with country code (11+ digits), return as is
-        if (strlen($cleaned) >= 11 && preg_match('/^\d{11,15}$/', $cleaned)) {
+        if (mb_strlen((string) $cleaned) >= 11 && preg_match('/^\d{11,15}$/', (string) $cleaned)) {
             return $cleaned;
         }
 
@@ -403,7 +404,7 @@ final class WhatsAppService
             // Remove leading 0 if present
             $cleaned = mb_ltrim($cleaned, '0');
 
-            return '92' . $cleaned;
+            return '92'.$cleaned;
         }
 
         return $cleaned;

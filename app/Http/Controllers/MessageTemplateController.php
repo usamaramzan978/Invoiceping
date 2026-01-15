@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use InvalidArgumentException;
 
 final class MessageTemplateController extends Controller
 {
@@ -124,15 +125,15 @@ final class MessageTemplateController extends Controller
             }
 
             return to_route('templates.index')->with('success', 'Template deleted successfully!');
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $invalidArgumentException) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $e->getMessage(),
+                    'message' => $invalidArgumentException->getMessage(),
                 ], 422);
             }
 
-            return to_route('templates.index')->with('error', $e->getMessage());
+            return to_route('templates.index')->with('error', $invalidArgumentException->getMessage());
         }
     }
 }

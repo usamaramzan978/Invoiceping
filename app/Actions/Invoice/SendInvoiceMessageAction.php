@@ -70,7 +70,7 @@ final readonly class SendInvoiceMessageAction
                 if ($preparedData === null) {
                     $results[$channel] = [
                         'success' => false,
-                        'message' => 'No template found for channel: ' . $channel,
+                        'message' => 'No template found for channel: '.$channel,
                     ];
 
                     continue;
@@ -91,10 +91,10 @@ final readonly class SendInvoiceMessageAction
 
                 $results[$channel] = [
                     'success' => true,
-                    'message' => 'Message queued for ' . $channel,
+                    'message' => 'Message queued for '.$channel,
                 ];
             } catch (Exception $exception) {
-                Log::error('Failed to prepare message for channel ' . $channel, [
+                Log::error('Failed to prepare message for channel '.$channel, [
                     'invoice_id' => $invoice->id,
                     'channel' => $channel,
                     'exception' => $exception->getMessage(),
@@ -102,7 +102,7 @@ final readonly class SendInvoiceMessageAction
 
                 $results[$channel] = [
                     'success' => false,
-                    'message' => 'Failed to prepare message: ' . $exception->getMessage(),
+                    'message' => 'Failed to prepare message: '.$exception->getMessage(),
                 ];
             }
         }
@@ -164,13 +164,13 @@ final readonly class SendInvoiceMessageAction
                 // Get PDF path for email attachment if PDF is included
                 if ($includePdf) {
                     $pdfPath = $this->getPdfPath($invoice);
-                    $pdfFileName = $pdfPath ? 'invoice-' . $invoice->invoice_number . '.pdf' : null;
+                    $pdfFileName = $pdfPath ? 'invoice-'.$invoice->invoice_number.'.pdf' : null;
                 }
             }
         } elseif ($channel === 'whatsapp' && $includePdf) {
             // For WhatsApp, get PDF path if checkbox is checked
             $pdfPath = $this->getPdfPath($invoice);
-            $pdfFileName = $pdfPath ? 'invoice-' . $invoice->invoice_number . '.pdf' : null;
+            $pdfFileName = $pdfPath ? 'invoice-'.$invoice->invoice_number.'.pdf' : null;
         }
 
         // Prepare recipient and sender data
@@ -283,7 +283,7 @@ final readonly class SendInvoiceMessageAction
         // Generate PDF synchronously for immediate sending
         try {
             $design = 1; // TODO: Get from invoice->pdf_design when that field exists
-            $generatePdfAction = app(\App\Actions\Invoice\GenerateInvoicePdfAction::class);
+            $generatePdfAction = app(GenerateInvoicePdfAction::class);
 
             return $generatePdfAction->execute($invoice, $design);
         } catch (Exception $exception) {

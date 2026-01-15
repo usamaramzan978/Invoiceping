@@ -12,9 +12,10 @@ final class SubscriptionInvoicePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own invoices
+        return true;
+        // Authenticated users can view their own invoices
     }
 
     /**

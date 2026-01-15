@@ -32,20 +32,6 @@ final class UpdateBusinessProfileRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
-     * Use E.164 format if available, otherwise use regular input.
-     */
-    protected function prepareForValidation(): void
-    {
-        // Use E.164 formatted number if available, otherwise use regular input
-        if ($this->has('whatsapp_number_e164') && !empty($this->input('whatsapp_number_e164'))) {
-            $this->merge([
-                'whatsapp_number' => $this->input('whatsapp_number_e164'),
-            ]);
-        }
-    }
-
-    /**
      * Get validated data, excluding whatsapp_number_e164 as it's only used for merging.
      */
     public function validated($key = null, $default = null): array
@@ -56,5 +42,19 @@ final class UpdateBusinessProfileRequest extends FormRequest
         unset($validated['whatsapp_number_e164']);
 
         return $validated;
+    }
+
+    /**
+     * Prepare the data for validation.
+     * Use E.164 format if available, otherwise use regular input.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Use E.164 formatted number if available, otherwise use regular input
+        if ($this->has('whatsapp_number_e164') && ! empty($this->input('whatsapp_number_e164'))) {
+            $this->merge([
+                'whatsapp_number' => $this->input('whatsapp_number_e164'),
+            ]);
+        }
     }
 }

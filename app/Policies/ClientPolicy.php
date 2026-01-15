@@ -12,9 +12,10 @@ final class ClientPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own clients
+        return true;
+        // Authenticated users can view their own clients
     }
 
     /**
@@ -23,17 +24,18 @@ final class ClientPolicy
     public function view(User $user, Client $client): bool
     {
         $client->loadMissing('business');
-        
-        return $client->business 
+
+        return $client->business
             && $client->business->user_id === $user->id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
-        return true; // Authenticated users can create clients
+        return true;
+        // Authenticated users can create clients
     }
 
     /**
@@ -42,8 +44,8 @@ final class ClientPolicy
     public function update(User $user, Client $client): bool
     {
         $client->loadMissing('business');
-        
-        return $client->business 
+
+        return $client->business
             && $client->business->user_id === $user->id;
     }
 
@@ -53,8 +55,8 @@ final class ClientPolicy
     public function delete(User $user, Client $client): bool
     {
         $client->loadMissing('business');
-        
-        return $client->business 
+
+        return $client->business
             && $client->business->user_id === $user->id;
     }
 }

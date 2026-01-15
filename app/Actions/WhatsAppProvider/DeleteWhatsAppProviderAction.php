@@ -13,4 +13,3 @@ final class DeleteWhatsAppProviderAction
         return $provider->delete();
     }
 }
-

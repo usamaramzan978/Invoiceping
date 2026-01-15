@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Support\Facades\Log;
 use App\Enums\WhatsAppProviderType;
 use App\Services\SecureTokenService;
 use Exception;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Log;
 
 final class WhatsAppProvider extends Model
 {
@@ -110,6 +110,14 @@ final class WhatsAppProvider extends Model
     }
 
     /**
+     * Get the user that owns the provider.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * Accessor for access_token - automatically decrypts
      */
     protected function getAccessTokenAttribute(?string $value): ?string
@@ -174,14 +182,6 @@ final class WhatsAppProvider extends Model
     }
 
     /**
-     * Get the user that owns the provider.
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
      * Encrypt a value using SecureTokenService
      */
     private function encryptValue(?string $value): ?string
@@ -207,7 +207,7 @@ final class WhatsAppProvider extends Model
             }
 
             if (! $user) {
-                throw new Exception('User not found for encryption. User ID: ' . ($this->user_id ?? 'null'));
+                throw new Exception('User not found for encryption. User ID: '.($this->user_id ?? 'null'));
             }
 
             $encrypted = $service->encryptToken(
@@ -219,7 +219,7 @@ final class WhatsAppProvider extends Model
 
             return $encrypted['encrypted_token'];
         } catch (Exception $exception) {
-            Log::error('Failed to encrypt value: ' . $exception->getMessage(), [
+            Log::error('Failed to encrypt value: '.$exception->getMessage(), [
                 'user_id' => $this->user_id,
                 'field' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? 'unknown',
             ]);
@@ -267,7 +267,7 @@ final class WhatsAppProvider extends Model
 
             return $decrypted['token'];
         } catch (Exception $exception) {
-            Log::error('Failed to decrypt value: ' . $exception->getMessage(), [
+            Log::error('Failed to decrypt value: '.$exception->getMessage(), [
                 'user_id' => $this->user_id,
             ]);
 

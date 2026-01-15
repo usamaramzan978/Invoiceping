@@ -13,4 +13,3 @@ final class DeleteInvoiceAction
         return $invoice->delete();
     }
 }
-

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Jobs\GenerateInvoicePdf as GenerateInvoicePdfJob;
 use App\Models\Invoice;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,10 +15,10 @@ use Illuminate\Support\Facades\Storage;
  * Service to process InvoiceBlock components in email templates.
  * Detects InvoiceBlock in template JSON and replaces them with actual PDF HTML.
  */
-final class InvoiceBlockProcessor
+final readonly class InvoiceBlockProcessor
 {
     public function __construct(
-        private readonly GenerateInvoicePdfAction $generatePdfAction
+        private GenerateInvoicePdfAction $generatePdfAction
     ) {}
 
     /**
@@ -39,39 +40,11 @@ final class InvoiceBlockProcessor
     }
 
     /**
-     * Recursively search for InvoiceBlock in template structure.
-     */
-    private function searchForInvoiceBlock(array $data): bool
-    {
-        foreach ($data as $key => $value) {
-            // Check if this is a block with type InvoiceBlock
-            if ($key === 'type' && $value === 'InvoiceBlock') {
-                return true;
-            }
-
-            // Check if this is a block data structure
-            if (is_array($value)) {
-                if (isset($value['type']) && $value['type'] === 'InvoiceBlock') {
-                    return true;
-                }
-
-                // Recursively search in nested structures
-                if ($this->searchForInvoiceBlock($value)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Queue PDF generation in background (for when user checks checkbox).
      * This makes frontend fast by not waiting for PDF generation.
      *
      * @param  Invoice  $invoice  Invoice model
      * @param  int  $design  Invoice design (1-6), defaults to 1
-     * @return void
      */
     public function queuePdfGeneration(Invoice $invoice, int $design = 1): void
     {
@@ -81,7 +54,7 @@ final class InvoiceBlockProcessor
         }
 
         // Dispatch job to generate PDF in background
-        GenerateInvoicePdfJob::dispatch($invoice->id, $design);
+        dispatch(new GenerateInvoicePdfJob($invoice->id, $design));
 
         Log::info('Invoice PDF generation queued', [
             'invoice_id' => $invoice->id,
@@ -123,6 +96,33 @@ final class InvoiceBlockProcessor
     }
 
     /**
+     * Recursively search for InvoiceBlock in template structure.
+     */
+    private function searchForInvoiceBlock(array $data): bool
+    {
+        foreach ($data as $key => $value) {
+            // Check if this is a block with type InvoiceBlock
+            if ($key === 'type' && $value === 'InvoiceBlock') {
+                return true;
+            }
+
+            // Check if this is a block data structure
+            if (is_array($value)) {
+                if (isset($value['type']) && $value['type'] === 'InvoiceBlock') {
+                    return true;
+                }
+
+                // Recursively search in nested structures
+                if ($this->searchForInvoiceBlock($value)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get existing PDF or generate new one synchronously.
      * Used when PDF is needed immediately (e.g., when sending email).
      *
@@ -141,7 +141,7 @@ final class InvoiceBlockProcessor
         // Generate synchronously for immediate needs (e.g., sending email)
         try {
             return $this->generatePdfAction->execute($invoice, $design);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             Log::error('Failed to generate PDF for invoice', [
                 'invoice_id' => $invoice->id,
                 'exception' => $exception->getMessage(),
@@ -157,12 +157,12 @@ final class InvoiceBlockProcessor
     private function generatePdfHtml(string $pdfPath, Invoice $invoice): string
     {
         // Get public URL for PDF file
-        $pdfUrl = asset('storage/' . $pdfPath);
+        asset('storage/'.$pdfPath);
 
         $downloadUrl = route('invoice.download', $invoice);
         $title = 'Invoice PDF';
-        $description = 'Your invoice is ready to download';
         $buttonText = 'Download PDF';
+
         // Generate HTML with PDF preview and download link
         // Using a simple approach: show download link with icon
         // For better UX, you could generate a thumbnail from PDF first page
@@ -193,14 +193,6 @@ final class InvoiceBlockProcessor
                     </svg>
                 </div>
 
-                <p style="
-                    margin: 0 0 20px 0;
-                    color: #6b7280;
-                    font-size: 14px;
-                ">
-                    %s
-                </p>
-
                 <a href="%s" style="
                     display: inline-block;
                     padding: 12px 28px;
@@ -211,12 +203,11 @@ final class InvoiceBlockProcessor
                     font-size: 14px;
                     font-weight: 500;
                 ">
-                    %s
+                    Download Invoice PDF
                 </a>
             </div>
             ',
             htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($description, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($buttonText, ENT_QUOTES, 'UTF-8')
         );

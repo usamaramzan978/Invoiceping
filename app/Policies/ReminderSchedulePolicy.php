@@ -12,9 +12,10 @@ final class ReminderSchedulePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own schedules
+        return true;
+        // Authenticated users can view their own schedules
     }
 
     /**
@@ -23,18 +24,19 @@ final class ReminderSchedulePolicy
     public function view(User $user, ReminderSchedule $reminderSchedule): bool
     {
         $reminderSchedule->loadMissing('invoice.business');
-        
-        return $reminderSchedule->invoice 
-            && $reminderSchedule->invoice->business 
+
+        return $reminderSchedule->invoice
+            && $reminderSchedule->invoice->business
             && $reminderSchedule->invoice->business->user_id === $user->id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
-        return true; // Authenticated users can create schedules
+        return true;
+        // Authenticated users can create schedules
     }
 
     /**
@@ -43,9 +45,9 @@ final class ReminderSchedulePolicy
     public function update(User $user, ReminderSchedule $reminderSchedule): bool
     {
         $reminderSchedule->loadMissing('invoice.business');
-        
-        return $reminderSchedule->invoice 
-            && $reminderSchedule->invoice->business 
+
+        return $reminderSchedule->invoice
+            && $reminderSchedule->invoice->business
             && $reminderSchedule->invoice->business->user_id === $user->id;
     }
 
@@ -55,9 +57,9 @@ final class ReminderSchedulePolicy
     public function cancel(User $user, ReminderSchedule $reminderSchedule): bool
     {
         $reminderSchedule->loadMissing('invoice.business');
-        
-        return $reminderSchedule->invoice 
-            && $reminderSchedule->invoice->business 
+
+        return $reminderSchedule->invoice
+            && $reminderSchedule->invoice->business
             && $reminderSchedule->invoice->business->user_id === $user->id;
     }
 
@@ -67,9 +69,9 @@ final class ReminderSchedulePolicy
     public function reschedule(User $user, ReminderSchedule $reminderSchedule): bool
     {
         $reminderSchedule->loadMissing('invoice.business');
-        
-        return $reminderSchedule->invoice 
-            && $reminderSchedule->invoice->business 
+
+        return $reminderSchedule->invoice
+            && $reminderSchedule->invoice->business
             && $reminderSchedule->invoice->business->user_id === $user->id;
     }
 }

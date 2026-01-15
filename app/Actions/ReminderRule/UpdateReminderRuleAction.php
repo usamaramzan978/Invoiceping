@@ -50,13 +50,13 @@ final class UpdateReminderRuleAction
                     ];
 
                     // Handle email templates
-                    if ($channelData['channel'] === 'email' && !empty($channelData['email_template_id'])) {
+                    if ($channelData['channel'] === 'email' && ! empty($channelData['email_template_id'])) {
                         $templateData['email_template_id'] = $channelData['email_template_id'];
                         $templateData['include_pdf'] = (bool) ($channelData['include_pdf'] ?? false);
                         ReminderRuleStepTemplate::query()->create($templateData);
                     }
                     // Handle WhatsApp/SMS templates
-                    elseif (in_array($channelData['channel'], ['whatsapp', 'sms']) && !empty($channelData['message_template_id'])) {
+                    elseif (in_array($channelData['channel'], ['whatsapp', 'sms']) && ! empty($channelData['message_template_id'])) {
                         $templateData['message_template_id'] = $channelData['message_template_id'];
                         ReminderRuleStepTemplate::query()->create($templateData);
                     }
@@ -67,4 +67,3 @@ final class UpdateReminderRuleAction
         });
     }
 }
-

@@ -12,11 +12,8 @@ final class DeleteMessageTemplateAction
     public function execute(MessageTemplates $template): bool
     {
         // Prevent deletion of default templates
-        if ($template->is_default) {
-            throw new InvalidArgumentException('Cannot delete a default template. Set another template as default first.');
-        }
+        throw_if($template->is_default, InvalidArgumentException::class, 'Cannot delete a default template. Set another template as default first.');
 
         return $template->delete();
     }
 }
-

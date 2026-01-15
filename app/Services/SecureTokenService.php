@@ -16,7 +16,7 @@ final class SecureTokenService
     /**
      * Encrypt WhatsApp token with user context
      */
-    public function encryptToken($token, $userId, $userEmail, $userUuid): array
+    public function encryptToken($token, string $userId, string $userEmail, string $userUuid): array
     {
         try {
             $key = $this->getUserKey($userId, $userEmail, $userUuid);
@@ -73,7 +73,7 @@ final class SecureTokenService
     /**
      * Decrypt WhatsApp token and verify user context
      */
-    public function decryptToken($encryptedData, $userId, $userEmail, $userUuid): array
+    public function decryptToken($encryptedData, string $userId, string $userEmail, string $userUuid): array
     {
         try {
             $key = $this->getUserKey($userId, $userEmail, $userUuid);

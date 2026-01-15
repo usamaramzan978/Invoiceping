@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Gate;
 
 final class BillingController extends Controller
 {
-
     /**
      * Display billing history
      */

@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Dashboard;
 
+use Illuminate\Support\Facades\Date;
 use App\Enums\InvoiceStatus;
 use App\Enums\ReminderStatusEnum;
-use App\Enums\TransactionStatus;
 use App\Models\BusinessProfile;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\ReminderSchedule;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +47,7 @@ final readonly class GetDashboardAnalyticsAction
 
     private function getOverviewCards(string $businessId): array
     {
-        $now = Carbon::now();
+        $now = Date::now();
         $startOfMonth = $now->copy()->startOfMonth();
         $startOfYear = $now->copy()->startOfYear();
 
@@ -60,13 +59,13 @@ final readonly class GetDashboardAnalyticsAction
 
         $invoiceStats = DB::table('invoices')
             ->where('business_id', $businessId)
-            ->selectRaw("
+            ->selectRaw('
                 COUNT(*) as total_invoices,
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as paid_count,
                 SUM(CASE WHEN status = ? AND due_date < ? THEN 1 ELSE 0 END) as overdue_count,
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as sent_count,
                 SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as draft_count
-            ", [$paidStatus, $sentStatus, $dueDate, $sentStatus, $draftStatus])
+            ', [$paidStatus, $sentStatus, $dueDate, $sentStatus, $draftStatus])
             ->first();
 
         // Revenue queries
@@ -124,9 +123,9 @@ final readonly class GetDashboardAnalyticsAction
 
     private function getRevenueMetrics(string $businessId): array
     {
-        $now = Carbon::now();
+        $now = Date::now();
         $lastMonth = $now->copy()->subMonth();
-        $lastYear = $now->copy()->subYear();
+        $now->copy()->subYear();
 
         // Current period revenue
         $currentMonthRevenue = Invoice::query()
@@ -197,13 +196,13 @@ final readonly class GetDashboardAnalyticsAction
                 'count' => Invoice::query()
                     ->where('business_id', $businessId)
                     ->where('status', InvoiceStatus::SENT)
-                    ->where('due_date', '<', Carbon::now()->toDateString())
+                    ->where('due_date', '<', Date::now()->toDateString())
                     ->whereNull('paid_at')
                     ->count(),
                 'amount' => (float) Invoice::query()
                     ->where('business_id', $businessId)
                     ->where('status', InvoiceStatus::SENT)
-                    ->where('due_date', '<', Carbon::now()->toDateString())
+                    ->where('due_date', '<', Date::now()->toDateString())
                     ->whereNull('paid_at')
                     ->sum('total_amount'),
             ],
@@ -228,8 +227,8 @@ final readonly class GetDashboardAnalyticsAction
 
         $newClientsThisMonth = Client::query()
             ->where('business_id', $businessId)
-            ->whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Date::now()->month)
+            ->whereYear('created_at', Date::now()->year)
             ->count();
 
         return [
@@ -242,7 +241,7 @@ final readonly class GetDashboardAnalyticsAction
 
     private function getReminderStatistics(string $businessId): array
     {
-        $reminderStats = ReminderSchedule::query()
+        ReminderSchedule::query()
             ->whereHas('invoice', function ($query) use ($businessId): void {
                 $query->where('business_id', $businessId);
             })
@@ -294,11 +293,9 @@ final readonly class GetDashboardAnalyticsAction
 
     private function getRevenueChartData(string $businessId): array
     {
-        $months = collect(range(5, 0))->map(function ($monthsAgo) {
-            return Carbon::now()->subMonths($monthsAgo);
-        });
+        $months = collect(range(5, 0))->map(fn($monthsAgo) => Date::now()->subMonths($monthsAgo));
 
-        $revenueData = $months->map(function ($month) use ($businessId) {
+        $revenueData = $months->map(function ($month) use ($businessId): array {
             $start = $month->copy()->startOfMonth();
             $end = $month->copy()->endOfMonth();
 
@@ -339,24 +336,21 @@ final readonly class GetDashboardAnalyticsAction
     {
         return Invoice::query()
             ->where('business_id', $businessId)
-            ->with(['client:id,name', 'items'])
-            ->orderBy('created_at', 'desc')
+            ->with(['client:id,name', 'items'])->latest()
             ->limit($limit)
             ->get()
-            ->map(function ($invoice) {
-                return [
-                    'id' => $invoice->id,
-                    'invoice_number' => $invoice->invoice_number,
-                    'client_name' => $invoice->client->name ?? 'N/A',
-                    'total_amount' => (float) $invoice->total_amount,
-                    'currency' => $invoice->currency ?? 'USD',
-                    'status' => $invoice->status->value,
-                    'status_label' => $invoice->status->label(),
-                    'due_date' => $invoice->due_date->format('Y-m-d'),
-                    'issue_date' => $invoice->issue_date->format('Y-m-d'),
-                    'created_at' => $invoice->created_at->format('Y-m-d H:i:s'),
-                ];
-            });
+            ->map(fn($invoice): array => [
+                'id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'client_name' => $invoice->client->name ?? 'N/A',
+                'total_amount' => (float) $invoice->total_amount,
+                'currency' => $invoice->currency ?? 'USD',
+                'status' => $invoice->status->value,
+                'status_label' => $invoice->status->label(),
+                'due_date' => $invoice->due_date->format('Y-m-d'),
+                'issue_date' => $invoice->issue_date->format('Y-m-d'),
+                'created_at' => $invoice->created_at->format('Y-m-d H:i:s'),
+            ]);
     }
 
     private function getTopClients(string $businessId, int $limit = 5): Collection
@@ -368,25 +362,21 @@ final readonly class GetDashboardAnalyticsAction
             ->orderBy('invoices_sum_total_amount', 'desc')
             ->limit($limit)
             ->get()
-            ->map(function ($client) {
-                return [
-                    'id' => $client->id,
-                    'name' => $client->name,
-                    'total_revenue' => (float) ($client->invoices_sum_total_amount ?? 0),
-                    'invoice_count' => $client->invoices_count,
-                    'status' => $client->status ?? 'active',
-                ];
-            });
+            ->map(fn($client): array => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'total_revenue' => (float) ($client->invoices_sum_total_amount ?? 0),
+                'invoice_count' => $client->invoices_count,
+                'status' => $client->status ?? 'active',
+            ]);
     }
 
     private function getMonthlyTrends(string $businessId): array
     {
-        $now = Carbon::now();
-        $months = collect(range(5, 0))->map(function ($monthsAgo) {
-            return Carbon::now()->subMonths($monthsAgo);
-        });
+        Date::now();
+        $months = collect(range(5, 0))->map(fn($monthsAgo) => Date::now()->subMonths($monthsAgo));
 
-        $trends = $months->map(function ($month) use ($businessId) {
+        $trends = $months->map(function ($month) use ($businessId): array {
             $start = $month->copy()->startOfMonth();
             $end = $month->copy()->endOfMonth();
 
@@ -415,7 +405,7 @@ final readonly class GetDashboardAnalyticsAction
             ];
         });
 
-        return $trends->toArray();
+        return $trends->all();
     }
 
     private function getEmptyAnalytics(): array
@@ -473,4 +463,3 @@ final readonly class GetDashboardAnalyticsAction
         ];
     }
 }
-

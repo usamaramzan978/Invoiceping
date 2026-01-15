@@ -12,6 +12,7 @@ use App\Actions\WhatsAppProvider\UpdateWhatsAppProviderAction;
 use App\Http\Requests\StoreWhatsAppProviderRequest;
 use App\Http\Requests\UpdateWhatsAppProviderRequest;
 use App\Models\WhatsAppProvider;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,6 @@ use Illuminate\View\View;
 
 final class WhatsAppProviderController extends Controller
 {
-
     public function __construct(
         private readonly CreateWhatsAppProviderAction $createWhatsAppProviderAction,
         private readonly DeleteWhatsAppProviderAction $deleteWhatsAppProviderAction,
@@ -72,10 +72,10 @@ final class WhatsAppProviderController extends Controller
 
             return to_route('whatsapp-providers.index')
                 ->with('success', 'WhatsApp provider created successfully.');
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return back()
                 ->withInput()
-                ->with('error', 'Failed to create WhatsApp provider: ' . $exception->getMessage());
+                ->with('error', 'Failed to create WhatsApp provider: '.$exception->getMessage());
         }
     }
 
@@ -120,10 +120,10 @@ final class WhatsAppProviderController extends Controller
 
             return to_route('whatsapp-providers.index')
                 ->with('success', 'WhatsApp provider updated successfully.');
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return back()
                 ->withInput()
-                ->with('error', 'Failed to update WhatsApp provider: ' . $exception->getMessage());
+                ->with('error', 'Failed to update WhatsApp provider: '.$exception->getMessage());
         }
     }
 
@@ -147,16 +147,16 @@ final class WhatsAppProviderController extends Controller
 
             return to_route('whatsapp-providers.index')
                 ->with('success', 'WhatsApp provider deleted successfully.');
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete WhatsApp provider: ' . $exception->getMessage(),
+                    'message' => 'Failed to delete WhatsApp provider: '.$exception->getMessage(),
                 ], 500);
             }
 
             return back()
-                ->with('error', 'Failed to delete WhatsApp provider: ' . $exception->getMessage());
+                ->with('error', 'Failed to delete WhatsApp provider: '.$exception->getMessage());
         }
     }
 
@@ -201,15 +201,15 @@ final class WhatsAppProviderController extends Controller
             }
 
             return back()->with('success', 'WhatsApp provider set as default successfully.');
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             if (request()->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to set default provider: ' . $exception->getMessage(),
+                    'message' => 'Failed to set default provider: '.$exception->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Failed to set default provider: ' . $exception->getMessage());
+            return back()->with('error', 'Failed to set default provider: '.$exception->getMessage());
         }
     }
 }

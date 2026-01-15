@@ -10,9 +10,8 @@ final class ToggleStatusReminderRuleAction
 {
     public function execute(ReminderRule $rule): ReminderRule
     {
-        $rule->update(['is_active' => !$rule->is_active]);
+        $rule->update(['is_active' => ! $rule->is_active]);
 
         return $rule;
     }
 }
-

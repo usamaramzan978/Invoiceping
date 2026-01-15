@@ -112,4 +112,3 @@ Route::middleware(['auth'])->group(function (): void {
         Route::resource('subscriptions', AdminSubscriptionController::class);
     });
 });
-

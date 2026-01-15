@@ -12,9 +12,10 @@ final class SubscriptionPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own subscriptions
+        return true;
+        // Authenticated users can view their own subscriptions
     }
 
     /**
@@ -28,9 +29,10 @@ final class SubscriptionPolicy
     /**
      * Determine if the user can create subscriptions
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
-        return true; // Authenticated users can create subscriptions
+        return true;
+        // Authenticated users can create subscriptions
     }
 
     /**

@@ -12,9 +12,10 @@ final class InvoicePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own invoices
+        return true;
+        // Authenticated users can view their own invoices
     }
 
     /**
@@ -23,17 +24,18 @@ final class InvoicePolicy
     public function view(User $user, Invoice $invoice): bool
     {
         $invoice->loadMissing('business');
-        
-        return $invoice->business 
+
+        return $invoice->business
             && $invoice->business->user_id === $user->id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
-        return true; // Authenticated users can create invoices
+        return true;
+        // Authenticated users can create invoices
     }
 
     /**
@@ -42,8 +44,8 @@ final class InvoicePolicy
     public function update(User $user, Invoice $invoice): bool
     {
         $invoice->loadMissing('business');
-        
-        return $invoice->business 
+
+        return $invoice->business
             && $invoice->business->user_id === $user->id;
     }
 
@@ -53,8 +55,8 @@ final class InvoicePolicy
     public function delete(User $user, Invoice $invoice): bool
     {
         $invoice->loadMissing('business');
-        
-        return $invoice->business 
+
+        return $invoice->business
             && $invoice->business->user_id === $user->id;
     }
 }

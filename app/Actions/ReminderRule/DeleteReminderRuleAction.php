@@ -13,4 +13,3 @@ final class DeleteReminderRuleAction
         return $rule->delete();
     }
 }
-

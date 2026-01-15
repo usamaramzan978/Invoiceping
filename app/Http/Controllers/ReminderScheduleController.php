@@ -152,13 +152,11 @@ final class ReminderScheduleController extends Controller
             ->get();
 
         // Pass email templates with template_json for JavaScript InvoiceBlock detection
-        $emailTemplatesWithJson = $emailTemplates->map(function ($template) {
-            return [
-                'id' => $template->id,
-                'name' => $template->name,
-                'template_json' => $template->template_json,
-            ];
-        });
+        $emailTemplatesWithJson = $emailTemplates->map(fn($template): array => [
+            'id' => $template->id,
+            'name' => $template->name,
+            'template_json' => $template->template_json,
+        ]);
 
         return view('dashboard.schedule-reminders.create', [
             'invoices' => $invoices,

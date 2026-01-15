@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Enums\ReminderStatusEnum;
 use App\Models\Invoice;
 use App\Models\ReminderSchedule;
@@ -93,13 +94,13 @@ final class SendInvoiceReminderJob implements ShouldQueue
                     // Get PDF path for email attachment if PDF is included
                     if ($includePdf) {
                         $pdfPath = $this->getPdfPath($schedule->invoice);
-                        $pdfFileName = $pdfPath ? 'invoice-' . $schedule->invoice->invoice_number . '.pdf' : null;
+                        $pdfFileName = $pdfPath ? 'invoice-'.$schedule->invoice->invoice_number.'.pdf' : null;
                     }
                 }
             } elseif ($schedule->isWhatsAppChannel() && $includePdf) {
                 // For WhatsApp, get PDF path if checkbox is checked
                 $pdfPath = $this->getPdfPath($schedule->invoice);
-                $pdfFileName = $pdfPath ? 'invoice-' . $schedule->invoice->invoice_number . '.pdf' : null;
+                $pdfFileName = $pdfPath ? 'invoice-'.$schedule->invoice->invoice_number.'.pdf' : null;
             }
 
             // Get recipient based on channel
@@ -222,7 +223,7 @@ final class SendInvoiceReminderJob implements ShouldQueue
         // Generate PDF synchronously for immediate sending
         try {
             $design = 1; // TODO: Get from invoice->pdf_design when that field exists
-            $generatePdfAction = app(\App\Actions\Invoice\GenerateInvoicePdfAction::class);
+            $generatePdfAction = app(GenerateInvoicePdfAction::class);
 
             return $generatePdfAction->execute($invoice, $design);
         } catch (Exception $exception) {

@@ -41,6 +41,10 @@ final class ReminderRuleStepTemplate extends Model
         'channel',
     ];
 
+    protected $casts = [
+        'include_pdf' => 'boolean',
+    ];
+
     /**
      * Get the reminder rule step that owns this template.
      *
@@ -94,8 +98,4 @@ final class ReminderRuleStepTemplate extends Model
     {
         return $this->channel === 'sms';
     }
-
-    protected $casts = [
-        'include_pdf' => 'boolean',
-    ];
 }

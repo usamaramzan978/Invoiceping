@@ -12,9 +12,10 @@ final class ReminderRulePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(): bool
     {
-        return true; // Authenticated users can view their own rules
+        return true;
+        // Authenticated users can view their own rules
     }
 
     /**
@@ -28,9 +29,10 @@ final class ReminderRulePolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
-        return true; // Authenticated users can create rules
+        return true;
+        // Authenticated users can create rules
     }
 
     /**

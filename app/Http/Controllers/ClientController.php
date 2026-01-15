@@ -29,7 +29,7 @@ final class ClientController extends Controller
         Gate::authorize('viewAny', Client::class);
 
         $businessId = auth()->user()->business?->id;
-        
+
         $clients = Client::query()
             ->where('business_id', $businessId)
             ->latest()

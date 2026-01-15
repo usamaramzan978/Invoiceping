@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Gate;
 
 final class SubscriptionInvoiceController extends Controller
 {
-
     /**
      * Display subscription invoices
      */

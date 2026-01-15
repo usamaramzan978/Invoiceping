@@ -8,7 +8,6 @@ use App\Models\BusinessProfile;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 final class CreateBusinessProfileAction
 {

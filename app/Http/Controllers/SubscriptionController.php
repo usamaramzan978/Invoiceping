@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\Gate;
 
 final class SubscriptionController extends Controller
 {
-
     public function __construct(
         private readonly CreateSubscription $createSubscription,
         private readonly ChangeSubscriptionPlan $changeSubscriptionPlan,
