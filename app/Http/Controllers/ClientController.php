@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
 use App\Actions\Client\CreateClientAction;
 use App\Actions\Client\DeleteClientAction;
 use App\Actions\Client\UpdateClientAction;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
+use App\Models\BusinessProfile;
 use App\Models\Client;
 use Exception;
 use Illuminate\Http\JsonResponse;

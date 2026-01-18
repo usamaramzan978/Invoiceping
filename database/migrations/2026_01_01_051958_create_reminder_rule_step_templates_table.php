@@ -22,13 +22,20 @@ return new class extends Migration
                 ->on('reminder_rule_steps')
                 ->cascadeOnDelete();
 
-            $table->uuid('message_template_id');
+            $table->uuid('message_template_id')->nullable();
             $table->foreign('message_template_id')
                 ->references('id')
                 ->on('message_templates')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
 
-            $table->string('channel'); // email | whatsapp
+            $table->uuid('email_template_id')->nullable();
+            $table->foreign('email_template_id')
+                ->references('id')
+                ->on('email_templates')
+                ->nullOnDelete();
+
+            $table->string('channel')->comment('email | whatsapp | sms');
+            $table->boolean('include_pdf')->default(false);
 
             $table->timestamps();
 

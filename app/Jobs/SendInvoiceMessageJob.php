@@ -64,19 +64,10 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 'email' => $this->sendEmail($logService, $invoice),
                 'whatsapp' => $this->sendWhatsApp($logService, $invoice),
                 'sms' => $this->sendSMS($logService, $invoice),
-                default => Log::warning('Unknown channel: '.$this->channel),
+                default => Log::warning('Unknown channel: ' . $this->channel),
             };
         } catch (Exception $exception) {
-            // Log error to database
-            $logService->logMessageFailed(
-                $this->channel,
-                $this->recipient,
-                $exception->getMessage(),
-                $invoice,
-                ['exception' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()],
-                $this->userId
-            );
-
+            // Don't log here - let the failed() method handle logging to avoid duplicates
             Log::error('Error in SendInvoiceMessageJob', [
                 'channel' => $this->channel,
                 'recipient' => $this->recipient,
@@ -88,15 +79,17 @@ final class SendInvoiceMessageJob implements ShouldQueue
 
     /**
      * Handle job failure.
+     * Laravel calls this method with only the exception parameter.
      */
-    public function failed(Throwable $exception, LogService $logService): void
+    public function failed(Throwable $exception): void
     {
+        $logService = app(LogService::class);
         $invoice = $this->invoiceId ? Invoice::query()->find($this->invoiceId) : null;
 
         $logService->logMessageFailed(
             $this->channel,
             $this->recipient,
-            'Job failed after '.$this->tries.' retries: '.$exception->getMessage(),
+            'Job failed after ' . $this->tries . ' retries: ' . $exception->getMessage(),
             $invoice,
             ['exception' => $exception->getMessage(), 'retries' => $this->tries],
             $this->userId
@@ -336,7 +329,7 @@ final class SendInvoiceMessageJob implements ShouldQueue
         // Add country code if not present (customize based on your needs)
         if (! str_starts_with((string) $cleaned, '92')) {
             // 92 is Pakistan code - adjust for your default country
-            return '92'.mb_ltrim((string) $cleaned, '0');
+            return '92' . mb_ltrim((string) $cleaned, '0');
         }
 
         return $cleaned;

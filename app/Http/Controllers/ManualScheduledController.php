@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
 use App\Actions\ReminderSchedule\CreateManualScheduledAction;
 use App\Actions\ReminderSchedule\UpdateManualScheduledAction;
 use App\Http\Requests\StoreManualScheduledRequest;
 use App\Http\Requests\UpdateManualScheduledRequest;
+use App\Models\BusinessProfile;
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\MessageTemplates;

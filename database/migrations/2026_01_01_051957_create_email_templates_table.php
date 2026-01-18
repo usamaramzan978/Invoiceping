@@ -14,7 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('email_templates', function (Blueprint $table): void {
-            $table->id();
+            $table->uuid('id')->primary();
 
             $table->uuid('user_id');
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
@@ -25,10 +25,14 @@ return new class extends Migration
             $table->longText('template_html')->nullable(); // Compiled HTML
             $table->string('category')->nullable();
             $table->boolean('is_default')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->softDeletes();
+
             $table->timestamps();
 
             $table->index('user_id');
             $table->index('category');
+            $table->unique(['user_id', 'name'], 'unique_template_name_per_user');
         });
     }
 

@@ -19,62 +19,44 @@ final class WhatsAppProviderSeeder extends Seeder
         // Get or create a demo user
         $user = User::query()->first();
 
-        // WhatsApp Cloud API Provider
+        if (! $user) {
+            return;
+        }
+
+        // Check if provider already exists
+        $existingProvider = WhatsAppProvider::query()
+            ->where('user_id', $user->id)
+            ->where('name', 'WhatsApp Cloud API - Local')
+            ->first();
+
+        if ($existingProvider) {
+            // Update existing provider with new token if needed
+            // Note: The access_token will be automatically encrypted by the model mutator
+            $existingProvider->update([
+                'access_token' => 'EAAbEvpHafCsBQfBh5ZBUGXJcqmLJOgkg2wdDiAUttIbl6wTEMUiUAB9tKljc52BCyasMnRV4GcYL5MKpiHNXwEw2ohowNCA1IlXQmmyhY1pynOj72XN5ynPJAcOJrLYlBDZCEOitfYNyAcIiDXZAx1dPDoo47xwV73fRsu8HyUAZB22qUooKzL8AJN2gOSd0cVi3D79zqghz5ZCZCQIxbQkw0fV4pdz1iOmGaRM1D5PNYy1LjRJelabNVeZC1WF48dOEn9xMpZC1n0tik1WZAb8uy',
+                'phone_number_id' => '916591911544094',
+                'business_account_id' => '3970087699960997',
+                'app_id' => '1905172630109227',
+                'is_active' => true,
+                'is_default' => true,
+            ]);
+
+            return;
+        }
+
+        // LOCAL ACCOUNT - Create new provider
         WhatsAppProvider::query()->create([
             'user_id' => $user->id,
-            'name' => 'WhatsApp Cloud API - Production',
+            'name' => 'WhatsApp Cloud API - Local',
             'type' => WhatsAppProviderType::WHATSAPP_CLOUD_API->value,
-            'access_token' => 'EAABsbCS1iHgBAIZBwZALOZCccT7QYYZBIZCZBQw3RJBzR9qT8VhkZBZB9SBZCZCQ7',
-            'phone_number_id' => '104567891234567',
-            'business_account_id' => '123456789012345',
-            'app_id' => '1234567890123456',
-            'app_secret' => 'abcdef1234567890abcdef1234567890',
+            'access_token' => 'EAAbEvpHafCsBQfBh5ZBUGXJcqmLJOgkg2wdDiAUttIbl6wTEMUiUAB9tKljc52BCyasMnRV4GcYL5MKpiHNXwEw2ohowNCA1IlXQmmyhY1pynOj72XN5ynPJAcOJrLYlBDZCEOitfYNyAcIiDXZAx1dPDoo47xwV73fRsu8HyUAZB22qUooKzL8AJN2gOSd0cVi3D79zqghz5ZCZCQIxbQkw0fV4pdz1iOmGaRM1D5PNYy1LjRJelabNVeZC1WF48dOEn9xMpZC1n0tik1WZAb8uy',
+            'phone_number_id' => '916591911544094',
+            'business_account_id' => '3970087699960997',
+            'app_id' => '1905172630109227',
+            'app_secret' => '',
             'is_active' => true,
             'is_default' => true,
-            'notes' => 'Main production WhatsApp Cloud API account',
-        ]);
-
-        // WhatsApp Cloud API Provider (Staging)
-        WhatsAppProvider::query()->create([
-            'user_id' => $user->id,
-            'name' => 'WhatsApp Cloud API - Staging',
-            'type' => WhatsAppProviderType::WHATSAPP_CLOUD_API->value,
-            'access_token' => 'EAABsbCS1iHgBAHZBwZALOZCccT7QYYZBIZCZBQw3RJBzR9qT8VhkZBZB9SBZCZCQ8',
-            'phone_number_id' => '104567891234568',
-            'business_account_id' => '123456789012346',
-            'app_id' => '1234567890123457',
-            'app_secret' => 'bcdefg2345678901bcdefg2345678901',
-            'is_active' => true,
-            'is_default' => false,
-            'notes' => 'Staging environment for testing',
-        ]);
-
-        // Twilio Provider
-        WhatsAppProvider::query()->create([
-            'user_id' => $user->id,
-            'name' => 'Twilio WhatsApp',
-            'type' => WhatsAppProviderType::TWILIO->value,
-            'account_sid' => 'ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-            'auth_token' => 'your_auth_token_here_12345678901234',
-            'from_phone_number' => '+14155552671',
-            'whatsapp_sandbox_number' => '+1415503667701',
-            'is_active' => true,
-            'is_default' => false,
-            'notes' => 'Twilio sandbox for development',
-        ]);
-
-        // Vonage Provider
-        WhatsAppProvider::query()->create([
-            'user_id' => $user->id,
-            'name' => 'Vonage WhatsApp',
-            'type' => WhatsAppProviderType::VONAGE->value,
-            'api_key' => 'aabbccdd11223344aabbccdd11223344',
-            'api_secret' => 'eeff5566aabbccdd77889900aabbccdd',
-            'from_number' => '1234567890',
-            'application_id' => '12ab3456-abcd-1234-abcd-1234567890ab',
-            'is_active' => false,
-            'is_default' => false,
-            'notes' => 'Vonage account - currently inactive',
+            'notes' => 'LOCAL WhatsApp Cloud API account',
         ]);
     }
 }

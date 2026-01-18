@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
 use App\Actions\ReminderSchedule\CancelReminderScheduleAction;
 use App\Actions\ReminderSchedule\CreateReminderScheduleAction;
 use App\Actions\ReminderSchedule\RescheduleReminderAction;
@@ -12,6 +11,7 @@ use App\Actions\ReminderSchedule\UpdateReminderScheduleAction;
 use App\Http\Requests\RescheduleReminderRequest;
 use App\Http\Requests\StoreReminderScheduleRequest;
 use App\Http\Requests\UpdateReminderScheduleRequest;
+use App\Models\BusinessProfile;
 use App\Models\EmailTemplate;
 use App\Models\Invoice;
 use App\Models\MessageTemplates;

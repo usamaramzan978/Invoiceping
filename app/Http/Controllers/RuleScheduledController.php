@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
 use App\Actions\ReminderSchedule\CreateRuleScheduledAction;
 use App\Actions\ReminderSchedule\UpdateRuleScheduledAction;
 use App\Http\Requests\StoreRuleScheduledRequest;
 use App\Http\Requests\UpdateRuleScheduledRequest;
+use App\Models\BusinessProfile;
 use App\Models\Invoice;
 use App\Models\ReminderRule;
 use App\Models\ReminderSchedule;

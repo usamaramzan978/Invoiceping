@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
 use App\Actions\Invoice\CreateInvoiceAction;
 use App\Actions\Invoice\DeleteInvoiceAction;
 use App\Actions\Invoice\GenerateInvoicePdfAction;
 use App\Actions\Invoice\UpdateInvoiceAction;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Requests\UpdateInvoiceRequest;
+use App\Models\BusinessProfile;
 use App\Models\Client;
 use App\Models\EmailTemplate;
 use App\Models\Invoice;

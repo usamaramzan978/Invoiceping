@@ -7,6 +7,7 @@ namespace App\Models;
 use Database\Factories\EmailTemplateFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
+ * @property string $id
  * @property string $user_id
  * @property string $name
  * @property string|null $subject
@@ -31,6 +32,7 @@ final class EmailTemplate extends Model
 {
     /** @use HasFactory<EmailTemplateFactory> */
     use HasFactory;
+    use HasUuids;
 
     use SoftDeletes;
 
