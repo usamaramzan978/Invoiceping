@@ -32,8 +32,8 @@ final class EmailTemplate extends Model
 {
     /** @use HasFactory<EmailTemplateFactory> */
     use HasFactory;
-    use HasUuids;
 
+    use HasUuids;
     use SoftDeletes;
 
     /**

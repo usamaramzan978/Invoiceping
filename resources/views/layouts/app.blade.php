@@ -50,7 +50,7 @@
     <meta name="mobile-web-app-capable" content="yes">
 
     {{-- SECURITY --}}
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    {{-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> --}}
 
     {{-- PERFORMANCE --}}
     <meta http-equiv="Cache-Control" content="public, max-age=31536000">
@@ -198,8 +198,17 @@
     @vite('resources/assets/js/custom-switcher.js')
     <!-- SELECT2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    @vite('resources/assets/js/select2.js')
-
+    {{-- @vite('resources/assets/js/select2.js') --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            $('.single-select2').select2();
+            $('.multiple-select2').select2({
+                multiple: true,
+                allowClear: false,
+                width: '100%'
+            });
+        });
+    </script>
     <!-- END SCRIPTS -->
 
 </body>

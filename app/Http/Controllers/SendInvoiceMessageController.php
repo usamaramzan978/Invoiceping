@@ -8,7 +8,6 @@ use App\Actions\Invoice\SendInvoiceMessageAction;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 final readonly class SendInvoiceMessageController
@@ -40,24 +39,24 @@ final readonly class SendInvoiceMessageController
             $results = $this->sendMessageAction->execute($validated, $userId);
 
             // Check if any channel failed
-            $failedChannels = array_filter($results, fn(array $result): bool => ! $result['success']);
+            $failedChannels = array_filter($results, fn (array $result): bool => ! $result['success']);
 
             if ($failedChannels !== []) {
                 $errorMessages = array_map(
-                    fn(array $result) => $result['message'],
+                    fn (array $result) => $result['message'],
                     $failedChannels
                 );
 
-                return back()->with('error', 'Some messages failed to send: ' . implode(', ', $errorMessages));
+                return back()->with('error', 'Some messages failed to send: '.implode(', ', $errorMessages));
             }
 
-            $successCount = count(array_filter($results, fn(array $result) => $result['success']));
+            $successCount = count(array_filter($results, fn (array $result) => $result['success']));
 
             return back()->with('success', sprintf('Successfully queued %d message(s) for sending.', $successCount));
         } catch (ValidationException $exception) {
             return back()->withErrors($exception->errors())->withInput();
         } catch (Exception $exception) {
-            return back()->with('error', 'An error occurred while sending messages: ' . $exception->getMessage());
+            return back()->with('error', 'An error occurred while sending messages: '.$exception->getMessage());
         }
     }
 }

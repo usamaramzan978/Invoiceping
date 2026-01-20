@@ -38,8 +38,7 @@
                             <div class="mb-3">
                                 <label for="user_id" class="form-label">User <span class="text-danger">*</span></label>
                                 <select name="user_id" id="user_id"
-                                    class="js-example-basic-single form-select @error('user_id') is-invalid @enderror"
-                                    required>
+                                    class="single-select2 form-select @error('user_id') is-invalid @enderror" required>
                                     <option value="">Select a user...</option>
                                     @foreach ($users as $user)
                                         <option value="{{ $user->id }}"
@@ -59,8 +58,7 @@
                                 <label for="plan_id" class="form-label">Subscription Plan <span
                                         class="text-danger">*</span></label>
                                 <select name="plan_id" id="plan_id"
-                                    class="js-example-basic-single form-select @error('plan_id') is-invalid @enderror"
-                                    required>
+                                    class="single-select2 form-select @error('plan_id') is-invalid @enderror" required>
                                     <option value="">Select a plan...</option>
                                     @foreach ($plans as $plan)
                                         <option value="{{ $plan->id }}"
@@ -82,7 +80,7 @@
                                 <label for="billing_cycle" class="form-label">Billing Cycle <span
                                         class="text-danger">*</span></label>
                                 <select name="billing_cycle" id="billing_cycle"
-                                    class="js-example-basic-single form-select @error('billing_cycle') is-invalid @enderror"
+                                    class="single-select2 form-select @error('billing_cycle') is-invalid @enderror"
                                     required>
                                     <option value="monthly" {{ old('billing_cycle') == 'monthly' ? 'selected' : '' }}>
                                         Monthly</option>

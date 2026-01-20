@@ -8,11 +8,11 @@ let mainContentDiv = document.querySelector(".main-content");
 const slideHasSub = document.querySelectorAll(".nav > ul > .slide.has-sub");
 
 const firstLevelItems = document.querySelectorAll(
-    ".nav > ul > .slide.has-sub > a"
+    ".nav > ul > .slide.has-sub > a",
 );
 
 const innerLevelItems = document.querySelectorAll(
-    ".nav > ul > .slide.has-sub .slide.has-sub > a"
+    ".nav > ul > .slide.has-sub .slide.has-sub > a",
 );
 
 class PopperObject {
@@ -44,7 +44,7 @@ class PopperObject {
         document.addEventListener(
             "click",
             (e) => this.clicker(e, this.popperTarget, this.reference),
-            false
+            false,
         );
 
         const ro = new ResizeObserver(() => {
@@ -80,7 +80,7 @@ class Poppers {
     init() {
         slideHasSub.forEach((element) => {
             this.subMenuPoppers.push(
-                new PopperObject(element, element.lastElementChild)
+                new PopperObject(element, element.lastElementChild),
             );
             this.closePoppers();
         });
@@ -321,7 +321,7 @@ let headerToggleBtn, WindowPreSize;
             .querySelector("#style")
             ?.setAttribute(
                 "href",
-                "/build/assets/libs/bootstrap/css/bootstrap.rtl.min.css"
+                "/build/assets/libs/bootstrap/css/bootstrap.rtl.min.css",
             );
         //RTL
         if (localStorage.getItem("ynexrtl")) {
@@ -397,10 +397,10 @@ export function toggleSidemenu() {
             sidebar.removeEventListener("click", icontextOpen);
             mainContentDiv.removeEventListener("click", icontextClose);
             let sidemenulink = document.querySelectorAll(
-                ".main-menu li > .side-menu__item"
+                ".main-menu li > .side-menu__item",
             );
             sidemenulink.forEach((ele) =>
-                ele.removeEventListener("click", doubleClickFn)
+                ele.removeEventListener("click", doubleClickFn),
             );
 
             let verticalStyle = html.getAttribute("data-vertical-style");
@@ -425,7 +425,7 @@ export function toggleSidemenu() {
                     ) {
                         html.removeAttribute(
                             "data-toggled",
-                            "icon-overlay-close"
+                            "icon-overlay-close",
                         );
                         sidebar.removeEventListener("mouseenter", mouseEntered);
                         sidebar.removeEventListener("mouseleave", mouseLeave);
@@ -434,22 +434,22 @@ export function toggleSidemenu() {
                             if (!localStorage.getItem("ynexlayout")) {
                                 html.setAttribute(
                                     "data-toggled",
-                                    "icon-overlay-close"
+                                    "icon-overlay-close",
                                 );
                             }
                             sidebar.addEventListener(
                                 "mouseenter",
-                                mouseEntered
+                                mouseEntered,
                             );
                             sidebar.addEventListener("mouseleave", mouseLeave);
                         } else {
                             sidebar.removeEventListener(
                                 "mouseenter",
-                                mouseEntered
+                                mouseEntered,
                             );
                             sidebar.removeEventListener(
                                 "mouseleave",
-                                mouseLeave
+                                mouseLeave,
                             );
                         }
                     }
@@ -464,7 +464,7 @@ export function toggleSidemenu() {
                         sidebar.removeEventListener("click", icontextOpen);
                         mainContentDiv.removeEventListener(
                             "click",
-                            icontextClose
+                            icontextClose,
                         );
                     } else {
                         html.setAttribute("data-toggled", "icon-text-close");
@@ -472,13 +472,13 @@ export function toggleSidemenu() {
                             sidebar.addEventListener("click", icontextOpen);
                             mainContentDiv.addEventListener(
                                 "click",
-                                icontextClose
+                                icontextClose,
                             );
                         } else {
                             sidebar.removeEventListener("click", icontextOpen);
                             mainContentDiv.removeEventListener(
                                 "click",
-                                icontextClose
+                                icontextClose,
                             );
                         }
                     }
@@ -503,23 +503,23 @@ export function toggleSidemenu() {
                         }
                     } else {
                         let sidemenu = document.querySelector(
-                            ".side-menu__item.active"
+                            ".side-menu__item.active",
                         );
                         if (sidemenu) {
                             html.setAttribute(
                                 "data-toggled",
-                                "double-menu-open"
+                                "double-menu-open",
                             );
                             if (sidemenu.nextElementSibling) {
                                 sidemenu.nextElementSibling.classList.add(
-                                    "double-menu-active"
+                                    "double-menu-active",
                                 );
                             } else {
                                 document
                                     .querySelector("html")
                                     .setAttribute(
                                         "data-toggled",
-                                        "double-menu-close"
+                                        "double-menu-close",
                                     );
                             }
                         }
@@ -540,17 +540,17 @@ export function toggleSidemenu() {
                         if (window.innerWidth >= 992) {
                             sidebar.addEventListener(
                                 "mouseenter",
-                                mouseEntered
+                                mouseEntered,
                             );
                             sidebar.addEventListener("mouseleave", mouseLeave);
                         } else {
                             sidebar.removeEventListener(
                                 "mouseenter",
-                                mouseEntered
+                                mouseEntered,
                             );
                             sidebar.removeEventListener(
                                 "mouseleave",
-                                mouseLeave
+                                mouseLeave,
                             );
                         }
                     }
@@ -700,7 +700,7 @@ export function doubletFn() {
     toggleSidemenu();
 
     const menuSlideItem = document.querySelectorAll(
-        ".main-menu > li > .side-menu__item"
+        ".main-menu > li > .side-menu__item",
     );
 
     // Create the tooltip element
@@ -820,7 +820,7 @@ export function setNavActive() {
                             if (element.classList.contains("active")) {
                                 element.children[1].style.display = "block";
                             }
-                        }
+                        },
                     );
                 }
 
@@ -885,10 +885,10 @@ function switcherArrowFn() {
         let menuNav = document.querySelector(".main-menu");
         let mainContainer1 = document.querySelector(".main-sidebar");
         let marginLeftValue = Math.ceil(
-            Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0])
+            Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0]),
         );
         let marginRightValue = Math.ceil(
-            Number(window.getComputedStyle(menuNav).marginRight.split("px")[0])
+            Number(window.getComputedStyle(menuNav).marginRight.split("px")[0]),
         );
         let mainContainer1Width = mainContainer1.offsetWidth;
         if (menuNav.scrollWidth > mainContainer1.offsetWidth) {
@@ -958,10 +958,10 @@ function switcherArrowFn() {
         let menuNav = document.querySelector(".main-menu");
         let mainContainer1 = document.querySelector(".main-sidebar");
         let marginLeftValue = Math.ceil(
-            Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0])
+            Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0]),
         );
         let marginRightValue = Math.ceil(
-            Number(window.getComputedStyle(menuNav).marginRight.split("px")[0])
+            Number(window.getComputedStyle(menuNav).marginRight.split("px")[0]),
         );
         let check = menuNav.scrollWidth - mainContainer1.offsetWidth;
         let mainContainer1Width = mainContainer1.offsetWidth;
@@ -1029,10 +1029,10 @@ export function checkHoriMenu() {
     let slideLeft = document.querySelector(".slide-left");
     let slideRight = document.querySelector(".slide-right");
     let marginLeftValue = Math.ceil(
-        Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0])
+        Number(window.getComputedStyle(menuNav).marginLeft.split("px")[0]),
     );
     let marginRightValue = Math.ceil(
-        Number(window.getComputedStyle(menuNav).marginRight.split("px")[0])
+        Number(window.getComputedStyle(menuNav).marginRight.split("px")[0]),
     );
     let check = menuNav.scrollWidth - mainContainer1.offsetWidth;
     // Show/Hide the arrows
@@ -1100,7 +1100,7 @@ export function checkHoriMenu() {
                 }, 100);
             });
         }
-    }
+    },
 );
 
 // double-menu click toggle start
@@ -1108,7 +1108,7 @@ function doublemenu() {
     if (window.innerWidth >= 992) {
         let html = document.querySelector("html");
         let sidemenulink = document.querySelectorAll(
-            ".main-menu > li > .side-menu__item"
+            ".main-menu > li > .side-menu__item",
         );
         sidemenulink.forEach((ele) => {
             ele.addEventListener("click", doubleClickFn);
@@ -1137,15 +1137,21 @@ function doubleClickFn() {
 }
 // double-menu click toggle end
 
-window.addEventListener("unload", () => {
-    let mainContent = document.querySelector(".main-content");
-    mainContent.removeEventListener("click", clearNavDropdown);
+window.addEventListener("pagehide", () => {
+    const mainContent = document.querySelector(".main-content");
+
+    if (mainContent) {
+        mainContent.removeEventListener("click", clearNavDropdown);
+    }
+
     window.removeEventListener("resize", ResizeMenu);
-    let sidemenulink = document.querySelectorAll(
-        ".main-menu li > .side-menu__item"
+
+    const sidemenulink = document.querySelectorAll(
+        ".main-menu li > .side-menu__item",
     );
+
     sidemenulink.forEach((ele) =>
-        ele.removeEventListener("click", doubleClickFn)
+        ele.removeEventListener("click", doubleClickFn),
     );
 });
 

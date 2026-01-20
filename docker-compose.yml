@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: ${APP_NAME}_app
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+
+  # -------------------------
+  # QUEUE WORKER
+  # -------------------------
+  queue:
+    build: .
+    container_name: ${APP_NAME}_queue
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+
+  # -------------------------
+  # SCHEDULER
+  # -------------------------
+  scheduler:
+    build: .
+    container_name: ${APP_NAME}_scheduler
+    command: /scheduler.sh
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+
+  # -------------------------
+  # MYSQL
+  # -------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: ${APP_NAME}_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # -------------------------
+  # REDIS
+  # -------------------------
+  redis:
+    image: redis:alpine
+    container_name: ${APP_NAME}_redis
+    ports:
+      - "${REDIS_PORT}:6379"
+
+volumes:
+  mysql_data:

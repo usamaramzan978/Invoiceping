@@ -72,6 +72,13 @@
                     </a>
                 </li>
 
+                <li class="slide">
+                    <a href="{{ route('support-tickets.index') }}" class="side-menu__item">
+                        <i class="bx bx-support side-menu__icon"></i>
+                        <span class="side-menu__label">Support Tickets</span>
+                    </a>
+                </li>
+
                 <!-- ================= REMINDERS ================= -->
                 <li class="slide__category">
                     <span class="category-name">Automation</span>
@@ -121,30 +128,6 @@
                     </ul>
                 </li>
 
-                <!-- ================= REPORTS ================= -->
-                <li class="slide__category">
-                    <span class="category-name">Insights</span>
-                </li>
-
-                <li class="slide has-sub">
-                    <a href="javascript:void(0);" class="side-menu__item">
-                        <i class="bx bx-bar-chart-alt-2 side-menu__icon"></i>
-                        <span class="side-menu__label">Reports & Export</span>
-                        <i class="fe fe-chevron-right side-menu__angle"></i>
-                    </a>
-                    <ul class="slide-menu child1">
-                        <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">Invoice Summary</a>
-                        </li>
-                        <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">Payment Performance</a>
-                        </li>
-                        <li class="slide">
-                            <a href="javascript:void(0);" class="side-menu__item">Export to Excel</a>
-                        </li>
-                    </ul>
-                </li>
-
                 <!-- ================= BILLING ================= -->
                 <li class="slide__category">
                     <span class="category-name">Billing</span>
@@ -189,6 +172,13 @@
                     <a href="{{ route('admin.subscriptions.index') }}" class="side-menu__item">
                         <i class="bx bx-cog side-menu__icon"></i>
                         <span class="side-menu__label">Admin: Subscriptions</span>
+                    </a>
+                </li>
+
+                <li class="slide">
+                    <a href="{{ route('admin.support-tickets.index') }}" class="side-menu__item">
+                        <i class="bx bx-support side-menu__icon"></i>
+                        <span class="side-menu__label">Admin: Support</span>
                     </a>
                 </li>
 

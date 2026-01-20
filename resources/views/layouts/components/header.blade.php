@@ -217,7 +217,7 @@
                                 height="32" class="rounded-circle">
                         </div>
                         <div class="d-sm-block d-none">
-                            <p class="fw-semibold mb-0 lh-1">Json Taylor</p>
+                            <p class="fw-semibold mb-0 lh-1">{{ auth()->user()->name }}</p>
                             <span class="op-7 fw-normal d-block fs-11">Web Designer</span>
                         </div>
                     </div>

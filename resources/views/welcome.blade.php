@@ -7,9 +7,11 @@
         .stat-card {
             transition: transform 0.2s;
         }
+
         .stat-card:hover {
             transform: translateY(-5px);
         }
+
         .chart-container {
             position: relative;
             height: 300px;
@@ -62,11 +64,13 @@
                             <div class="text-end">
                                 @if ($revenue['monthly_growth_percentage'] ?? 0 > 0)
                                     <span class="badge bg-success-transparent">
-                                        <i class="ri-arrow-up-line me-1"></i>{{ number_format($revenue['monthly_growth_percentage'] ?? 0, 1) }}%
+                                        <i
+                                            class="ri-arrow-up-line me-1"></i>{{ number_format($revenue['monthly_growth_percentage'] ?? 0, 1) }}%
                                     </span>
                                 @elseif (($revenue['monthly_growth_percentage'] ?? 0) < 0)
                                     <span class="badge bg-danger-transparent">
-                                        <i class="ri-arrow-down-line me-1"></i>{{ number_format(abs($revenue['monthly_growth_percentage'] ?? 0), 1) }}%
+                                        <i
+                                            class="ri-arrow-down-line me-1"></i>{{ number_format(abs($revenue['monthly_growth_percentage'] ?? 0), 1) }}%
                                     </span>
                                 @endif
                             </div>
@@ -98,11 +102,13 @@
                         </div>
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <span class="fs-20 fw-semibold">${{ number_format($overview['total_revenue'] ?? 0, 2) }}</span>
+                                <span
+                                    class="fs-20 fw-semibold">${{ number_format($overview['total_revenue'] ?? 0, 2) }}</span>
                             </div>
                         </div>
                         <div class="mt-2">
-                            <small class="text-muted">This month: ${{ number_format($overview['monthly_revenue'] ?? 0, 2) }}</small>
+                            <small class="text-muted">This month:
+                                ${{ number_format($overview['monthly_revenue'] ?? 0, 2) }}</small>
                         </div>
                     </div>
                 </div>
@@ -123,11 +129,13 @@
                         </div>
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
-                                <span class="fs-20 fw-semibold">${{ number_format($overview['pending_amount'] ?? 0, 2) }}</span>
+                                <span
+                                    class="fs-20 fw-semibold">${{ number_format($overview['pending_amount'] ?? 0, 2) }}</span>
                             </div>
                         </div>
                         <div class="mt-2">
-                            <small class="text-danger">Overdue: ${{ number_format($overview['overdue_amount'] ?? 0, 2) }}</small>
+                            <small class="text-danger">Overdue:
+                                ${{ number_format($overview['overdue_amount'] ?? 0, 2) }}</small>
                         </div>
                     </div>
                 </div>
@@ -203,7 +211,8 @@
                                 <span class="fs-12 text-muted mb-1 d-block">Draft Invoices</span>
                                 <span class="fs-18 fw-semibold">{{ $invoiceStats['draft']['count'] ?? 0 }}</span>
                                 <div class="mt-1">
-                                    <small class="text-muted">${{ number_format($invoiceStats['draft']['amount'] ?? 0, 2) }}</small>
+                                    <small
+                                        class="text-muted">${{ number_format($invoiceStats['draft']['amount'] ?? 0, 2) }}</small>
                                 </div>
                             </div>
                             <div>
@@ -224,7 +233,8 @@
                                 <span class="fs-12 text-muted mb-1 d-block">Sent Invoices</span>
                                 <span class="fs-18 fw-semibold">{{ $invoiceStats['sent']['count'] ?? 0 }}</span>
                                 <div class="mt-1">
-                                    <small class="text-muted">${{ number_format($invoiceStats['sent']['amount'] ?? 0, 2) }}</small>
+                                    <small
+                                        class="text-muted">${{ number_format($invoiceStats['sent']['amount'] ?? 0, 2) }}</small>
                                 </div>
                             </div>
                             <div>
@@ -245,7 +255,8 @@
                                 <span class="fs-12 text-muted mb-1 d-block">Paid Invoices</span>
                                 <span class="fs-18 fw-semibold">{{ $invoiceStats['paid']['count'] ?? 0 }}</span>
                                 <div class="mt-1">
-                                    <small class="text-muted">${{ number_format($invoiceStats['paid']['amount'] ?? 0, 2) }}</small>
+                                    <small
+                                        class="text-muted">${{ number_format($invoiceStats['paid']['amount'] ?? 0, 2) }}</small>
                                 </div>
                             </div>
                             <div>
@@ -264,9 +275,11 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <span class="fs-12 text-muted mb-1 d-block">Overdue Invoices</span>
-                                <span class="fs-18 fw-semibold text-danger">{{ $invoiceStats['overdue']['count'] ?? 0 }}</span>
+                                <span
+                                    class="fs-18 fw-semibold text-danger">{{ $invoiceStats['overdue']['count'] ?? 0 }}</span>
                                 <div class="mt-1">
-                                    <small class="text-danger">${{ number_format($invoiceStats['overdue']['amount'] ?? 0, 2) }}</small>
+                                    <small
+                                        class="text-danger">${{ number_format($invoiceStats['overdue']['amount'] ?? 0, 2) }}</small>
                                 </div>
                             </div>
                             <div>
@@ -337,7 +350,8 @@
                         <div class="mt-3 pt-3 border-top">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Success Rate</span>
-                                <span class="fw-semibold">{{ number_format($reminderStats['success_rate'] ?? 0, 1) }}%</span>
+                                <span
+                                    class="fw-semibold">{{ number_format($reminderStats['success_rate'] ?? 0, 1) }}%</span>
                             </div>
                         </div>
                     </div>
@@ -428,13 +442,15 @@
                                     @forelse ($recentInvoices as $invoice)
                                         <tr>
                                             <td>
-                                                <a href="{{ route('invoices.show', $invoice['id']) }}" class="fw-semibold text-primary">
+                                                <a href="{{ route('invoices.show', $invoice['id']) }}"
+                                                    class="fw-semibold text-primary">
                                                     #{{ $invoice['invoice_number'] }}
                                                 </a>
                                             </td>
                                             <td>{{ $invoice['client_name'] }}</td>
                                             <td>
-                                                <span class="fw-semibold">{{ $invoice['currency'] }} {{ number_format($invoice['total_amount'], 2) }}</span>
+                                                <span class="fw-semibold">{{ $invoice['currency'] }}
+                                                    {{ number_format($invoice['total_amount'], 2) }}</span>
                                             </td>
                                             <td>
                                                 @php
@@ -452,7 +468,8 @@
                                             </td>
                                             <td>{{ \Carbon\Carbon::parse($invoice['due_date'])->format('M d, Y') }}</td>
                                             <td>
-                                                <a href="{{ route('invoices.show', $invoice['id']) }}" class="btn btn-sm btn-info-light">
+                                                <a href="{{ route('invoices.show', $invoice['id']) }}"
+                                                    class="btn btn-sm btn-info-light">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
                                             </td>
@@ -491,17 +508,20 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <span class="avatar avatar-sm avatar-rounded bg-primary-transparent me-2">
+                                                    <span
+                                                        class="avatar avatar-sm avatar-rounded bg-primary-transparent me-2">
                                                         <i class="ri-user-line"></i>
                                                     </span>
                                                     <div>
                                                         <div class="fw-semibold">{{ $client['name'] }}</div>
-                                                        <small class="text-muted">{{ $client['invoice_count'] }} invoices</small>
+                                                        <small class="text-muted">{{ $client['invoice_count'] }}
+                                                            invoices</small>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="fw-semibold">${{ number_format($client['total_revenue'], 2) }}</span>
+                                                <span
+                                                    class="fw-semibold">{{ number_format($client['total_revenue'], 2) }}</span>
                                             </td>
                                         </tr>
                                     @empty

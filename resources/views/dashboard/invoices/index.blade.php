@@ -413,7 +413,7 @@
         })
         .then(data => {
             SEND_TEMPLATES = data;
-            console.log('Templates loaded:', SEND_TEMPLATES);
+            // console.log('Templates loaded:', SEND_TEMPLATES);
             updateTemplateGrid();
         })
         .catch(error => {
@@ -590,15 +590,25 @@
     }
     // Update grid on channel checkbox change
     document.addEventListener('DOMContentLoaded', function() {
+
+        function updatePdfCheckboxVisibility() {
+            const emailChecked = document.querySelector(
+                '.channel-checkbox[value="email"]'
+            )?.checked;
+
+            const pdfWrapper = document.querySelector('.pdf-checkbox-wrapper');
+            if (!pdfWrapper) return;
+
+            pdfWrapper.style.display = emailChecked ? 'block' : 'none';
+        }
+
         document.querySelectorAll('.channel-checkbox').forEach(cb => {
             cb.addEventListener('change', function() {
                 updateTemplateGrid();
-                // Update PDF checkbox visibility when channels change
                 setTimeout(updatePdfCheckboxVisibility, 100);
             });
         });
 
-        // Also check on initial load if email is already selected
         setTimeout(updatePdfCheckboxVisibility, 200);
     });
 </script>

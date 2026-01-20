@@ -13,6 +13,7 @@ use App\Models\ReminderRule;
 use App\Models\ReminderSchedule;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
+use App\Models\SupportTicket;
 use App\Models\WhatsAppProvider;
 use App\Policies\BillingTransactionPolicy;
 use App\Policies\BusinessProfilePolicy;
@@ -23,6 +24,7 @@ use App\Policies\ReminderRulePolicy;
 use App\Policies\ReminderSchedulePolicy;
 use App\Policies\SubscriptionInvoicePolicy;
 use App\Policies\SubscriptionPolicy;
+use App\Policies\SupportTicketPolicy;
 use App\Policies\WhatsAppProviderPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -44,6 +46,7 @@ final class AuthServiceProvider extends ServiceProvider
         Client::class => ClientPolicy::class,
         BusinessProfile::class => BusinessProfilePolicy::class,
         BillingTransaction::class => BillingTransactionPolicy::class,
+        SupportTicket::class => SupportTicketPolicy::class,
     ];
 
     /**

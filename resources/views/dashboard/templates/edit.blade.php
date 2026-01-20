@@ -115,7 +115,7 @@
                                 <div class="col-6">
                                     <div class="mb-3">
                                         <label class="form-label">Set as Default</label>
-                                        <select name="is_default" class="form-select js-example-basic-single">
+                                        <select name="is_default" class="form-select single-select2">
                                             <option value="0"
                                                 {{ old('is_default', $template->is_default) == '0' ? 'selected' : '' }}>No
                                             </option>
@@ -129,7 +129,7 @@
                                 <div class="col-6">
                                     <div class="mb-3">
                                         <label class="form-label">Status</label>
-                                        <select name="is_active" class="form-select js-example-basic-single">
+                                        <select name="is_active" class="form-select single-select2">
                                             <option value="1"
                                                 {{ old('is_active', $template->is_active) == '1' ? 'selected' : '' }}>
                                                 Active</option>

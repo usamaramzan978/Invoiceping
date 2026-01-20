@@ -265,7 +265,7 @@
                 <form method="GET" action="{{ route('logs.index') }}" class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Type</label>
-                        <select name="type" class="form-control form-select js-example-basic-single">
+                        <select name="type" class="form-control form-select single-select2">
                             <option value="">All Types</option>
                             <option value="email" {{ request('type') === 'email' ? 'selected' : '' }}>Email</option>
                             <option value="whatsapp" {{ request('type') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>
@@ -277,7 +277,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Status</label>
-                        <select name="status" class="form-control form-select js-example-basic-single">
+                        <select name="status" class="form-control form-select single-select2">
                             <option value="">All Statuses</option>
                             <option value="success" {{ request('status') === 'success' ? 'selected' : '' }}>Success</option>
                             <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>Failed</option>
@@ -287,7 +287,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Channel</label>
-                        <select name="channel" class="form-control form-select js-example-basic-single">
+                        <select name="channel" class="form-control form-select single-select2">
                             <option value="">All Channels</option>
                             <option value="email" {{ request('channel') === 'email' ? 'selected' : '' }}>Email</option>
                             <option value="whatsapp" {{ request('channel') === 'whatsapp' ? 'selected' : '' }}>WhatsApp</option>

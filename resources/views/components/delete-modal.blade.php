@@ -46,11 +46,10 @@
 <script>
     // Initialize delete modal after DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Delete modal script initializing...');
 
         // Check if Bootstrap is loaded and elements exist
         let retryCount = 0;
-        const maxRetries = 50; // 5 seconds max
+        const maxRetries = 5; // 5 seconds max
 
         function checkBootstrapAndInit() {
             // Check if modal elements exist
@@ -72,7 +71,7 @@
 
             // Check if Bootstrap is loaded
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                console.log('Bootstrap loaded, initializing delete modal');
+                // console.log('Bootstrap loaded, initializing delete modal');
                 initDeleteModal();
             } else {
                 retryCount++;
@@ -109,12 +108,12 @@
             // Global delete modal functionality
             window.DeleteModal = {
                 show: function(title, message, formId, recordName = 'record') {
-                    console.log('DeleteModal.show called with:', {
-                        title,
-                        message,
-                        formId,
-                        recordName
-                    });
+                    // console.log('DeleteModal.show called with:', {
+                    //     title,
+                    //     message,
+                    //     formId,
+                    //     recordName
+                    // });
 
                     // Check if all required elements exist
                     const titleEl = document.getElementById('delete-modal-title');

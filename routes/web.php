@@ -18,6 +18,8 @@ use App\Http\Controllers\RuleScheduledController;
 use App\Http\Controllers\SendInvoiceMessageController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SubscriptionInvoiceController;
+use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\SupportTicketReplyController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\WhatsAppProviderController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +30,11 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::resource('clients', ClientController::class);
     Route::resource('business-profile', BusinessProfileController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    Route::resource('support-tickets', SupportTicketController::class)->parameters([
+        'support-tickets' => 'support_ticket',
+    ]);
+    Route::post('support-tickets/{support_ticket}/replies', [SupportTicketReplyController::class, 'store'])
+        ->name('support-tickets.replies.store');
     //    Invoice Routes
     Route::post('invoices/preview', [InvoiceController::class, 'preview'])->name('invoices.preview');
     Route::get('invoice/{invoice}/download', [InvoiceController::class, 'download'])->name('invoice.download');
@@ -110,5 +117,8 @@ Route::middleware(['auth'])->group(function (): void {
     Route::prefix('admin')->name('admin.')->group(function (): void {
         // Admin Subscription Management (Manual CRUD)
         Route::resource('subscriptions', AdminSubscriptionController::class);
+        Route::get('support-tickets', [SupportTicketController::class, 'index'])->name('support-tickets.index');
+        Route::post('support-tickets/{support_ticket}/replies', [SupportTicketReplyController::class, 'storeAdmin'])
+            ->name('support-tickets.replies.store');
     });
 });

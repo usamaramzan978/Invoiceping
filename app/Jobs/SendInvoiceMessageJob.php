@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -23,9 +24,9 @@ final class SendInvoiceMessageJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 1;
+    public int $tries = 3;
 
-    public int $timeout = 30;
+    public int $timeout = 60;
 
     /**
      * Create a new job instance.
@@ -60,18 +61,36 @@ final class SendInvoiceMessageJob implements ShouldQueue
         $invoice = $this->invoiceId ? Invoice::query()->find($this->invoiceId) : null;
 
         try {
+            Log::info('SendInvoiceMessageJob started', [
+                'job_id' => $this->job?->getJobId() ?? 'unknown',
+                'channel' => $this->channel,
+                'recipient' => $this->maskRecipient($this->recipient),
+                'user_id' => $this->userId,
+                'invoice_id' => $this->invoiceId,
+                'attempt' => $this->attempts(),
+            ]);
+
             match ($this->channel) {
                 'email' => $this->sendEmail($logService, $invoice),
                 'whatsapp' => $this->sendWhatsApp($logService, $invoice),
                 'sms' => $this->sendSMS($logService, $invoice),
-                default => Log::warning('Unknown channel: ' . $this->channel),
+                default => throw new Exception('Unknown channel: '.$this->channel),
             };
-        } catch (Exception $exception) {
-            // Don't log here - let the failed() method handle logging to avoid duplicates
-            Log::error('Error in SendInvoiceMessageJob', [
+
+            Log::info('SendInvoiceMessageJob completed successfully', [
+                'job_id' => $this->job?->getJobId() ?? 'unknown',
                 'channel' => $this->channel,
-                'recipient' => $this->recipient,
+                'recipient' => $this->maskRecipient($this->recipient),
+            ]);
+        } catch (Exception $exception) {
+            Log::error('SendInvoiceMessageJob exception', [
+                'job_id' => $this->job?->getJobId() ?? 'unknown',
+                'channel' => $this->channel,
+                'recipient' => $this->maskRecipient($this->recipient),
+                'user_id' => $this->userId,
                 'exception' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'attempt' => $this->attempts(),
             ]);
             throw $exception;
         }
@@ -83,23 +102,39 @@ final class SendInvoiceMessageJob implements ShouldQueue
      */
     public function failed(Throwable $exception): void
     {
-        $logService = app(LogService::class);
-        $invoice = $this->invoiceId ? Invoice::query()->find($this->invoiceId) : null;
+        try {
+            $logService = app(LogService::class);
+            $invoice = $this->invoiceId ? Invoice::query()->find($this->invoiceId) : null;
 
-        $logService->logMessageFailed(
-            $this->channel,
-            $this->recipient,
-            'Job failed after ' . $this->tries . ' retries: ' . $exception->getMessage(),
-            $invoice,
-            ['exception' => $exception->getMessage(), 'retries' => $this->tries],
-            $this->userId
-        );
+            $failureMessage = 'Job failed after '.$this->attempts().' attempts: '.$exception->getMessage();
 
-        Log::error('SendInvoiceMessageJob failed after retries', [
-            'channel' => $this->channel,
-            'recipient' => $this->recipient,
-            'exception' => $exception->getMessage(),
-        ]);
+            $logService->logMessageFailed(
+                $this->channel,
+                $this->recipient,
+                $failureMessage,
+                $invoice,
+                [
+                    'exception' => $exception->getMessage(),
+                    'attempts' => $this->attempts(),
+                    'trace' => mb_substr($exception->getTraceAsString(), 0, 1000),
+                ],
+                $this->userId
+            );
+
+            Log::error('SendInvoiceMessageJob permanently failed', [
+                'job_id' => $this->job?->getJobId() ?? 'unknown',
+                'channel' => $this->channel,
+                'recipient' => $this->maskRecipient($this->recipient),
+                'user_id' => $this->userId,
+                'attempts' => $this->attempts(),
+                'exception' => $exception->getMessage(),
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error in SendInvoiceMessageJob::failed()', [
+                'original_exception' => $exception->getMessage(),
+                'new_exception' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -107,28 +142,41 @@ final class SendInvoiceMessageJob implements ShouldQueue
      */
     private function sendEmail(LogService $logService, ?Invoice $invoice): void
     {
-        if ($this->recipient === '' || $this->recipient === '0') {
-            $logService->logWarning('Recipient email is empty', ['channel' => 'email'], $this->userId);
-            Log::warning('Recipient email is empty');
+        // Validate recipient
+        if (in_array($this->recipient, ['', '0', '0'], true)) {
+            $message = 'Recipient email is empty';
+            $logService->logWarning($message, ['channel' => 'email'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
-        if ($this->content === '' || $this->content === '0') {
-            $logService->logWarning('Email content is empty', ['channel' => 'email'], $this->userId);
-            Log::warning('Email content is empty');
+        // Validate content
+        if (in_array($this->content, ['', '0', '0'], true)) {
+            $message = 'Email content is empty';
+            $logService->logWarning($message, ['channel' => 'email'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
-        if (in_array($this->subject, [null, '', '0'], true)) {
-            $logService->logWarning('Email subject is empty', ['channel' => 'email'], $this->userId);
-            Log::warning('Email subject is empty');
+        // Validate subject
+        if (in_array($this->subject, [null, '', '0', '0'], true)) {
+            $message = 'Email subject is empty';
+            $logService->logWarning($message, ['channel' => 'email'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
         try {
+            Log::info('Sending email', [
+                'recipient' => $this->maskRecipient($this->recipient),
+                'subject' => $this->subject,
+                'content_length' => mb_strlen($this->content),
+                'has_pdf' => !in_array($this->pdfPath, [null, '', '0'], true),
+            ]);
+
             // Use Mailable class for proper HTML email rendering
             Mail::to($this->recipient)->send(
                 new InvoiceEmail(
@@ -148,15 +196,24 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 [
                     'from_email' => $this->fromEmail,
                     'content_length' => mb_strlen($this->content),
+                    'recipient' => $this->maskRecipient($this->recipient),
                 ],
                 $this->userId
             );
 
             Log::info('Email sent successfully', [
-                'recipient' => $this->recipient,
+                'recipient' => $this->maskRecipient($this->recipient),
                 'subject' => $this->subject,
+                'user_id' => $this->userId,
             ]);
         } catch (Exception $exception) {
+            Log::error('Failed to send email', [
+                'recipient' => $this->maskRecipient($this->recipient),
+                'subject' => $this->subject,
+                'exception' => $exception->getMessage(),
+                'user_id' => $this->userId,
+            ]);
+
             $logService->logMessageFailed(
                 'email',
                 $this->recipient,
@@ -166,10 +223,6 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 $this->userId
             );
 
-            Log::error('Failed to send email', [
-                'recipient' => $this->recipient,
-                'exception' => $exception->getMessage(),
-            ]);
             throw $exception;
         }
     }
@@ -179,16 +232,20 @@ final class SendInvoiceMessageJob implements ShouldQueue
      */
     private function sendWhatsApp(LogService $logService, ?Invoice $invoice): void
     {
-        if ($this->recipient === '' || $this->recipient === '0') {
-            $logService->logWarning('WhatsApp recipient phone is empty', ['channel' => 'whatsapp'], $this->userId);
-            Log::warning('WhatsApp recipient phone is empty');
+        // Validate recipient
+        if (in_array($this->recipient, ['', '0', '0'], true)) {
+            $message = 'WhatsApp recipient phone is empty';
+            $logService->logWarning($message, ['channel' => 'whatsapp'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
-        if ($this->content === '' || $this->content === '0') {
-            $logService->logWarning('WhatsApp message content is empty', ['channel' => 'whatsapp'], $this->userId);
-            Log::warning('WhatsApp message content is empty');
+        // Validate content
+        if (in_array($this->content, ['', '0', '0'], true)) {
+            $message = 'WhatsApp message content is empty';
+            $logService->logWarning($message, ['channel' => 'whatsapp'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
@@ -196,10 +253,38 @@ final class SendInvoiceMessageJob implements ShouldQueue
         $provider = 'unknown';
 
         try {
+            $formattedPhone = $this->formatPhoneNumber($this->recipient);
+
+            Log::info('Preparing to send WhatsApp message', [
+                'original_phone' => $this->maskRecipient($this->recipient),
+                'formatted_phone' => $this->maskRecipient($formattedPhone),
+                'user_id' => $this->userId,
+                'content_length' => mb_strlen($this->content),
+                'has_pdf' => !in_array($this->pdfPath, [null, '', '0'], true),
+            ]);
+
+            // Verify PDF exists if provided
+            if (!in_array($this->pdfPath, [null, '', '0'], true)) {
+                if (! Storage::disk('public')->exists($this->pdfPath)) {
+                    Log::warning('PDF file not found for WhatsApp send', [
+                        'pdf_path' => $this->pdfPath,
+                        'user_id' => $this->userId,
+                    ]);
+                    // Continue without PDF rather than failing
+                    $this->pdfPath = null;
+                    $this->pdfFileName = null;
+                } else {
+                    Log::info('PDF file verified', [
+                        'pdf_path' => $this->pdfPath,
+                        'file_size' => Storage::disk('public')->size($this->pdfPath),
+                    ]);
+                }
+            }
+
             $whatsappService = app(WhatsAppService::class);
             $result = $whatsappService->send(
                 $this->userId,
-                $this->recipient,
+                $formattedPhone,
                 $this->content,
                 $this->pdfPath,
                 $this->pdfFileName
@@ -207,50 +292,61 @@ final class SendInvoiceMessageJob implements ShouldQueue
 
             $provider = $result['provider'] ?? 'unknown';
 
-            if ($result['success']) {
-                // Log successful send
-                $logService->logMessageSent(
-                    'whatsapp',
-                    $this->recipient,
-                    $this->content,
-                    null,
-                    $invoice,
-                    [
-                        'original_phone' => $this->recipient,
-                        'message_id' => $result['message_id'] ?? null,
-                        'provider' => $provider,
-                        'message_length' => mb_strlen($this->content),
-                    ],
-                    $this->userId
-                );
+            Log::info('WhatsApp send response received', [
+                'provider' => $provider,
+                'success' => $result['success'],
+                'message_id' => $result['message_id'] ?? null,
+                'user_id' => $this->userId,
+            ]);
 
-                Log::info('WhatsApp message sent', [
-                    'phone' => $this->recipient,
+            if (! $result['success']) {
+                throw new Exception($result['error'] ?? 'Failed to send WhatsApp message - unknown error');
+            }
+
+            // Log successful send
+            $logService->logMessageSent(
+                'whatsapp',
+                $this->recipient,
+                $this->content,
+                null,
+                $invoice,
+                [
+                    'original_phone' => $this->maskRecipient($this->recipient),
+                    'formatted_phone' => $this->maskRecipient($formattedPhone),
                     'message_id' => $result['message_id'] ?? null,
                     'provider' => $provider,
                     'message_length' => mb_strlen($this->content),
-                ]);
-            } else {
-                throw new Exception($result['error'] ?? 'Failed to send WhatsApp message');
-            }
+                ],
+                $this->userId
+            );
+
+            Log::info('WhatsApp message sent successfully', [
+                'formatted_phone' => $this->maskRecipient($formattedPhone),
+                'message_id' => $result['message_id'] ?? null,
+                'provider' => $provider,
+                'user_id' => $this->userId,
+            ]);
         } catch (Exception $exception) {
+            Log::error('Failed to send WhatsApp message', [
+                'original_phone' => $this->maskRecipient($this->recipient),
+                'provider' => $provider,
+                'exception' => $exception->getMessage(),
+                'user_id' => $this->userId,
+            ]);
+
             $logService->logMessageFailed(
                 'whatsapp',
                 $this->recipient,
                 $exception->getMessage(),
                 $invoice,
                 [
-                    'original_phone' => $this->recipient,
+                    'original_phone' => $this->maskRecipient($this->recipient),
+                    'formatted_phone' => $this->maskRecipient($this->formatPhoneNumber($this->recipient)),
                     'provider' => $provider,
                 ],
                 $this->userId
             );
 
-            Log::error('Failed to send WhatsApp message', [
-                'phone' => $this->recipient,
-                'provider' => $provider,
-                'exception' => $exception->getMessage(),
-            ]);
             throw $exception;
         }
     }
@@ -260,22 +356,34 @@ final class SendInvoiceMessageJob implements ShouldQueue
      */
     private function sendSMS(LogService $logService, ?Invoice $invoice): void
     {
-        if ($this->recipient === '' || $this->recipient === '0') {
-            $logService->logWarning('SMS recipient phone is empty', ['channel' => 'sms'], $this->userId);
-            Log::warning('SMS recipient phone is empty');
+        // Validate recipient
+        if (in_array($this->recipient, ['', '0', '0'], true)) {
+            $message = 'SMS recipient phone is empty';
+            $logService->logWarning($message, ['channel' => 'sms'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
-        if ($this->content === '' || $this->content === '0') {
-            $logService->logWarning('SMS message content is empty', ['channel' => 'sms'], $this->userId);
-            Log::warning('SMS message content is empty');
+        // Validate content
+        if (in_array($this->content, ['', '0', '0'], true)) {
+            $message = 'SMS message content is empty';
+            $logService->logWarning($message, ['channel' => 'sms'], $this->userId);
+            Log::warning($message, ['user_id' => $this->userId]);
 
             return;
         }
 
         try {
             $formattedPhone = $this->formatPhoneNumber($this->recipient);
+
+            Log::info('Sending SMS message', [
+                'original_phone' => $this->maskRecipient($this->recipient),
+                'formatted_phone' => $this->maskRecipient($formattedPhone),
+                'message_length' => mb_strlen($this->content),
+                'sms_parts' => ceil(mb_strlen($this->content) / 160),
+                'user_id' => $this->userId,
+            ]);
 
             // TODO: Integrate with your SMS API service
             // Example: SMSService::send($formattedPhone, $this->content);
@@ -288,50 +396,114 @@ final class SendInvoiceMessageJob implements ShouldQueue
                 null,
                 $invoice,
                 [
-                    'original_phone' => $this->recipient,
-                    'formatted_phone' => $formattedPhone,
+                    'original_phone' => $this->maskRecipient($this->recipient),
+                    'formatted_phone' => $this->maskRecipient($formattedPhone),
                     'message_length' => mb_strlen($this->content),
-                    'sms_parts' => ceil(mb_strlen($this->content) / 160), // SMS parts calculation
+                    'sms_parts' => ceil(mb_strlen($this->content) / 160),
                 ],
                 $this->userId
             );
 
             Log::info('SMS message sent', [
-                'phone' => $formattedPhone,
+                'phone' => $this->maskRecipient($formattedPhone),
                 'message_length' => mb_strlen($this->content),
+                'user_id' => $this->userId,
             ]);
         } catch (Exception $exception) {
+            Log::error('Failed to send SMS message', [
+                'original_phone' => $this->maskRecipient($this->recipient),
+                'formatted_phone' => $this->maskRecipient($this->formatPhoneNumber($this->recipient)),
+                'exception' => $exception->getMessage(),
+                'user_id' => $this->userId,
+            ]);
+
             $logService->logMessageFailed(
                 'sms',
                 $this->recipient,
                 $exception->getMessage(),
                 $invoice,
-                ['formatted_phone' => $this->formatPhoneNumber($this->recipient)],
+                ['formatted_phone' => $this->maskRecipient($this->formatPhoneNumber($this->recipient))],
                 $this->userId
             );
 
-            Log::error('Failed to send SMS message', [
-                'phone' => $this->recipient,
-                'exception' => $exception->getMessage(),
-            ]);
             throw $exception;
         }
     }
 
     /**
-     * Format phone number (customize based on your requirements).
+     * Format phone number to digits only (WhatsApp API format).
+     * Removes all non-digit characters and adds country code if needed.
+     *
+     * @param  string  $phone  Phone number in various formats (with or without +, dashes, spaces)
+     * @return string Formatted phone number as digits only (e.g., 923015551234)
+     *
+     * @throws Exception if phone number is invalid
      */
     private function formatPhoneNumber(string $phone): string
     {
-        // Remove any non-digit characters
-        $cleaned = preg_replace('/\D/', '', $phone);
+        // Remove any whitespace and non-digit characters
+        $phone = mb_trim($phone);
 
-        // Add country code if not present (customize based on your needs)
-        if (! str_starts_with((string) $cleaned, '92')) {
-            // 92 is Pakistan code - adjust for your default country
-            return '92' . mb_ltrim((string) $cleaned, '0');
+        throw_if($phone === '' || $phone === '0', Exception::class, 'Phone number cannot be empty');
+
+        // Remove all non-digit characters (this includes +, -, spaces, etc.)
+        $digits = preg_replace('/\D/', '', $phone);
+
+        throw_if(empty($digits), Exception::class, 'Invalid phone number: no digits found after cleaning');
+
+        // If it's already 11-15 digits, assume it's a full international number
+        if (mb_strlen($digits) >= 11 && mb_strlen($digits) <= 15) {
+            return $digits;
         }
 
-        return $cleaned;
+        // If it starts with 92 (Pakistan country code), it's already formatted
+        if (str_starts_with($digits, '92')) {
+            return $digits;
+        }
+
+        // If it starts with 0 (Pakistan domestic format), remove it and add country code
+        if (str_starts_with($digits, '0')) {
+            $digits = mb_substr($digits, 1);
+
+            return '92'.$digits;
+        }
+
+        // If shorter than 11 digits, assume missing country code, add 92 (Pakistan)
+        if (mb_strlen($digits) < 11) {
+            return '92'.$digits;
+        }
+
+        // Default: return digits as is
+        return $digits;
+    }
+
+    /**
+     * Mask sensitive information (phone numbers, emails) for logging.
+     *
+     * @param  string  $value  Sensitive value
+     * @return string Masked value for safe logging
+     */
+    private function maskRecipient(string $value): string
+    {
+        if ($value === '' || $value === '0') {
+            return '***';
+        }
+
+        if (str_contains($value, '@')) {
+            // Email format
+            $parts = explode('@', $value);
+            if (count($parts) === 2) {
+                $localPart = $parts[0];
+                $domain = $parts[1];
+
+                return mb_substr($localPart, 0, 1).'***@'.$domain;
+            }
+        } elseif (mb_strlen($value) >= 4) {
+            // Phone format
+            $masked = mb_substr($value, 0, 3).'***'.mb_substr($value, -4);
+            return $masked;
+        }
+
+        return '***';
     }
 }
