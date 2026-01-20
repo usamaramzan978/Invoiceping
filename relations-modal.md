@@ -2,6 +2,10 @@
 ./vendor/bin/pint
 ./vendor/bin/rector process
 
+docker compose up -d
+docker compose exec app php artisan migrate
+docker compose exec app /var/www/html/docker/laravel-healthcheck.sh
+
 Recent Activity , Cards, Charts , Tables
 
 User
